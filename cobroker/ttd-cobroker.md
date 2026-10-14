@@ -3,7 +3,7 @@
 | Thuộc tính | Nội dung |
 | --- | --- |
 | Trạng thái thiết kế | DRAFT — phục vụ review; chưa có biên bản phê duyệt |
-| Phiên bản tài liệu | 0.1 — 14/10/2026; hợp nhất nội dung Cobroker và bốn tính năng mới |
+| Phiên bản tài liệu | 0.1 — 14/10/2026; hợp nhất nội dung Cobroker và bốn phân hệ mới |
 | Hệ thống | VHM Agent / Cobroker |
 | Phạm vi service | CoBroker Core, Sales Analytics, Watchlist; tích hợp OCR/eKYC FPT |
 | Chủ sở hữu / người phê duyệt | Cần bổ sung tên người chịu trách nhiệm từ các nhóm bên dưới |
@@ -62,7 +62,7 @@ Cobroker quản lý vòng đời hồ sơ cộng tác viên/Sale và đại lý:
 
 ## 1.2 In Scope
 
-Giữ và cập nhật các nghiệp vụ Cobroker hiện có còn phù hợp; bổ sung cả bốn tính năng trong **một tài liệu L2**. Tài liệu mô tả trách nhiệm service, quy tắc, API, dữ liệu, luồng thành công/lỗi, quyền, triển khai và kiểm thử.
+Giữ và cập nhật các nghiệp vụ Cobroker hiện có còn phù hợp; bổ sung cả bốn phân hệ trong **một tài liệu L2**. Tài liệu mô tả trách nhiệm service, quy tắc, API, dữ liệu, luồng thành công/lỗi, quyền, triển khai và kiểm thử.
 
 Tích hợp danh tính hiện hành dùng **FPT qua service OCR/eKYC**, theo xác nhận của chủ hệ thống ngày 14/10/2026 và source `ocr-ekyc`. Core không quản lý credential FPT và không gọi trực tiếp API xác thực/upload của nhà cung cấp cũ.
 
@@ -144,7 +144,7 @@ Yêu cầu cập nhật có trạng thái riêng với đại lý: `PENDING_UPDA
 
 Kết quả OCR/eKYC `COMPLETED` chỉ thể hiện kết thúc xử lý kỹ thuật. Core phải kiểm outcome, nội dung kết quả và quy tắc đối soát trước khi chấp thuận danh tính; không coi HTTP 2xx hoặc completed là tự động duyệt hồ sơ.
 
-## 3.2 Tính năng 1 — Xếp hạng Sale theo doanh số
+## 3.2 Phân hệ 1 — Xếp hạng Sale theo doanh số
 
 ### 3.2.1 Ma trận năng lực
 
@@ -168,7 +168,7 @@ Kết quả OCR/eKYC `COMPLETED` chỉ thể hiện kết thúc xử lý kỹ th
 
 Ví dụ minh họa: doanh số quý trước 10 tỷ, quý này 20 tỷ, trọng số 30/70 → 17 tỷ điểm. Có 101 người đủ ngưỡng Kim cương, người thứ 100 và 101 đồng điểm → quota 100 có thể cấp 101 hạng Kim cương theo quy tắc hòa điểm.
 
-## 3.3 Tính năng 2 — Quản lý Sale cấm bán/hạn chế bán
+## 3.3 Phân hệ 2 — Quản lý Sale cấm bán/hạn chế bán
 
 ### 3.3.1 Ma trận năng lực
 
@@ -206,7 +206,7 @@ Mốc tham chiếu ưu tiên ngày cọc hợp lệ gần nhất. Khi không có
 
 Scanner lập danh sách ứng viên PENDING, kiểm tỷ lệ bất thường trước khi ACTIVE và phát outbox. Mặc định chưa bật, dry-run bật. Cơ chế grace hiện bỏ qua lượt đầu và cho lượt sau đánh giá lại; các câu SRS về thời điểm khóa sau gia hạn cần thống nhất trước bật thực thi. Các mốc fallback và eligibility giao dịch phải được chốt trong contract facts.
 
-## 3.4 Tính năng 3 — Theo dõi chu kỳ bán hàng
+## 3.4 Phân hệ 3 — Theo dõi chu kỳ bán hàng
 
 ### 3.4.1 Ma trận SRS
 
@@ -252,7 +252,7 @@ Mọi giao dịch cùng ngày đạt thử thách thuộc kỳ thử thách, kh�
 - Chuyển đối tượng Đại lý/O2O/Tự doanh hiện có nhánh `AUDIENCE_CHANGE_REQUIRES_REVIEW`; chưa coi là chính sách cuối cùng.
 - Cấu hình tức thì sau mốc terminal hiện không tự vượt điểm dừng thử thách. SRS có câu “tất cả reset” và “terminal không tự reset”; cần BO chốt ngoại lệ.
 
-## 3.5 Tính năng 4 — Quản lý vùng, đại lý, liên minh, pháp nhân
+## 3.5 Phân hệ 4 — Quản lý vùng, đại lý, liên minh, pháp nhân
 
 ### 3.5.1 Ma trận Use Case
 

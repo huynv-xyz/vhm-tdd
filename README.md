@@ -2,7 +2,7 @@
 
 ## Cobroker
 
-Đọc [TTD Cobroker](cobroker/ttd-cobroker.md): một tài liệu gồm nền tảng Cobroker và bốn tính năng:
+Đọc [TTD Cobroker](cobroker/ttd-cobroker.md): một tài liệu gồm nền tảng Cobroker và bốn phân hệ:
 
 1. Xếp hạng Sale theo doanh số.
 2. Quản lý Sale cấm bán/hạn chế bán.
