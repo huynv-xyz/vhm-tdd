@@ -3,7 +3,7 @@
 | Trường | Nội dung |
 | --- | --- |
 | Trạng thái | DRAFT — trình thẩm định kiến trúc |
-| Phiên bản & lịch sử thay đổi | v0.3 — 14/10/2026 — Thiết kế nghiệp vụ Cobroker và bốn phân hệ; xác định ranh giới dịch vụ tích hợp |
+| Phiên bản & lịch sử thay đổi | v0.4 — 14/10/2026 — Chuẩn hóa diễn đạt thiết kế và truy vết yêu cầu nghiệp vụ |
 | Hệ thống | VHM Agent / Cobroker |
 | Phạm vi thiết kế | CoBroker Core, Sales Analytics và Watchlist |
 | Nhóm chịu trách nhiệm | Backend · Product/Business · Solution Architecture · Integration · ANBM/Security · Data Owner · SRE/DBA |
@@ -146,7 +146,7 @@ Kết quả OCR/eKYC `COMPLETED` chỉ thể hiện kết thúc xử lý kỹ th
 
 ### 3.2.1 Ma trận năng lực
 
-| SRS | Thiết kế | Kết quả nghiệp vụ |
+| Mã yêu cầu | Thiết kế | Kết quả nghiệp vụ |
 | --- | --- | --- |
 | US-01 | Bảng xếp hạng theo quý, thông tin Sale, doanh số, điểm và hạng | Tra cứu tối đa 4 quý; phân biệt kỳ đang tính và kỳ đã công bố |
 | US-02 | Từ khóa, đơn vị, trạng thái, quý, hạng và sắp xếp | Bộ lọc luôn giao với phạm vi dữ liệu của người dùng |
@@ -159,10 +159,10 @@ Kết quả OCR/eKYC `COMPLETED` chỉ thể hiện kết thúc xử lý kỹ th
 1. Giao dịch xếp hạng phải là mua sơ cấp và có ngày ký HĐMB/VBCN trong kỳ. Contract nguồn ánh xạ `businessType=1`, `serviceType=2`; đây là mã contract nguồn.
 2. `netRevenue = gross − VAT − maintenance`. Thiếu thành phần không coi là 0; tiền âm, vượt độ chính xác hoặc thiếu ngày bị loại với lý do.
 3. Giao dịch bị hủy sau ký vẫn được tính cho ranking. Không tái sử dụng điều kiện loại giao dịch hủy của chu kỳ.
-4. Điểm theo SRS: `a% × doanh số quý trước + b% × doanh số quý hiện tại`. So sánh trên số chính xác; làm tròn 2 chữ số ở hiển thị.
+4. Điểm xếp hạng = `a% × doanh số quý trước + b% × doanh số quý hiện tại`. So sánh trên số chính xác; làm tròn 2 chữ số ở hiển thị.
 5. Xét lần lượt Kim cương → Bạch kim → Vàng, đồng thời thỏa điểm tối thiểu và quota. Người đủ điểm nhưng vượt quota xét hạng kế tiếp.
 6. Áp dụng `ALLOW_TIE`: các Sale đồng điểm tại ranh giới quota cùng nhận hạng. Quota được mở rộng đúng nhóm đồng điểm ở ranh giới.
-7. Cấu hình thẩm định quan hệ ngưỡng điểm Kim cương > Bạch kim > Vàng. Tập tùy chọn được công bố cho người dùng tuân theo phạm vi SRS; các chế độ kỹ thuật mở rộng được quản lý tại DEC-06.
+7. Cấu hình phải bảo đảm quan hệ ngưỡng điểm Kim cương > Bạch kim > Vàng. Phạm vi tùy chọn xếp hạng và quyền sử dụng được quản lý tại DEC-06.
 
 Ví dụ minh họa: doanh số quý trước 10 tỷ, quý này 20 tỷ, trọng số 30/70 → 17 tỷ điểm. Có 101 người đủ ngưỡng Kim cương, người thứ 100 và 101 đồng điểm → quota 100 có thể cấp 101 hạng Kim cương theo quy tắc hòa điểm.
 
@@ -188,7 +188,7 @@ Một bản ghi có loại `BANNED` hoặc `RESTRICTED`, trạng thái `PENDING/
 
 Cấm bán có thể ghi nhận khi chưa tìm được tài khoản. Luồng thủ công chọn tài khoản liên quan; import áp theo các tài khoản khớp được xử lý. Các tài khoản được chọn và thông tin định danh là hai lớp dữ liệu khác nhau; không mặc định mọi người có cùng tên là cùng đối tượng.
 
-Mô hình persistence duy trì một hồ sơ BANNED theo CCCD/mã nhân viên xuyên vòng đời. Bổ sung sử dụng bản ghi đang áp dụng; áp dụng lại sử dụng bản ghi đã gỡ, bảo toàn lịch sử. DEC-01 quản lý quyết định về tính duy nhất và tương thích SRS BR-03.
+Mô hình persistence duy trì một hồ sơ BANNED theo CCCD/mã nhân viên xuyên vòng đời. Bổ sung sử dụng bản ghi đang áp dụng; áp dụng lại sử dụng bản ghi đã gỡ, bảo toàn lịch sử. Quyết định về tính duy nhất của hồ sơ và lịch sử áp dụng được quản lý tại DEC-01, truy vết yêu cầu BR-03.
 
 ### 3.3.3 Công khai, gỡ và kiểm tra điều kiện
 
@@ -206,7 +206,7 @@ Scanner lập danh sách ứng viên PENDING, kiểm tỷ lệ bất thường t
 
 ### 3.4.1 Ma trận yêu cầu nghiệp vụ
 
-| SRS | Thiết kế | Kết quả nghiệp vụ |
+| Mã yêu cầu | Thiết kế | Kết quả nghiệp vụ |
 | --- | --- | --- |
 | US-01 | Bảng phân loại và kỳ gần nhất | Hiển thị chính thức, thử thách hoặc đề xuất ngừng hợp tác |
 | US-02 | Search, đơn vị, trạng thái, đối tượng, phân loại, sort | Áp dụng scope server-side trước phân trang |
@@ -252,7 +252,7 @@ Mọi giao dịch cùng ngày đạt thử thách thuộc kỳ thử thách, kh�
 
 ### 3.5.1 Ma trận Use Case
 
-| SRS | Thiết kế | Ràng buộc chính |
+| Mã yêu cầu | Thiết kế | Ràng buộc chính |
 | --- | --- | --- |
 | UC-01 | CRUD vùng, liên kết CMS và lịch sử | Tên duy nhất; ít nhất một vai trò; ID CMS không thuộc hai vùng |
 | UC-02 | Ngừng/kích hoạt vùng | Kiểm quan hệ hiện hành/tương lai và tính hợp lệ của CMS |
@@ -279,7 +279,7 @@ Nguồn dự án của đại lý là tập DISTINCT dự án được phân cô
 
 Hạng đại lý gồm A/B/C; mặc định C đối với không độc quyền. Hạng A yêu cầu EXCLUSIVE. Import hạng không đổi loại độc quyền, không cập nhật hạng bằng PUT hồ sơ thông thường. File tối đa 5 MB/1.000 dòng; preview có hiệu lực 15 phút, gắn actor/tổ chức và version snapshot. Confirm thành công toàn bộ hoặc rollback toàn bộ nếu dữ liệu đã thay đổi. Đây là hạng đại lý, không liên quan quota hạng Sale.
 
-Form tạo đại lý yêu cầu vùng chủ quản và Miền theo SRS. Cutover gồm backfill dữ liệu cũ, nâng contract caller và áp validation bắt buộc; compatibility của caller cũ được quản lý tại REL-02.
+Vùng chủ quản và Miền là thông tin bắt buộc khi tạo đại lý. Cutover gồm backfill dữ liệu cũ, nâng contract caller và áp validation bắt buộc; compatibility của caller cũ được quản lý tại REL-02.
 
 ### 3.5.4 Liên minh và pháp nhân
 
@@ -440,7 +440,7 @@ Badge hiển thị hạng của quý liền trước; chuyển kỳ hiển thị
 Luồng sinh chứng nhận tách khỏi request bảng xếp hạng:
 
 1. Quản trị upload nền PNG qua File Service; template được quản lý theo phiên bản.
-2. Bước RESOLVE xác định Sale, quý, hạng và nhãn đại lý hoặc vùng/phòng/nhóm theo SRS.
+2. Bước RESOLVE xác định Sale, quý, hạng và nhãn đơn vị hiển thị: đại lý hoặc vùng/phòng/nhóm.
 3. Bước RENDER tạo ảnh với font tiếng Việt, căn tên dài và lưu ở vùng file riêng tư.
 4. API trả trạng thái chờ, thành công hoặc lỗi; URL tải chỉ được cấp sau kiểm actor/resource.
 5. Gửi lại cùng yêu cầu không tạo nhiều chứng nhận có nội dung khác nhau cho cùng bộ dữ liệu công bố.
@@ -1203,7 +1203,7 @@ Go-live record ghi kết quả từng tiêu chí, reviewer và evidence của m�
 
 ## 15.2 Quality Gates & Test Evidence
 
-Test specification được tổ chức theo calculator, API, persistence, contract, security và E2E. QA duy trì traceability từ SRS/rule đến test case và kết quả chạy.
+Test specification được tổ chức theo calculator, API, persistence, contract, security và E2E. QA duy trì truy vết từ mã yêu cầu nghiệp vụ (US/UC/BR) qua mục thiết kế và tiêu chí nghiệm thu đến ca kiểm thử và kết quả chạy.
 
 | Gate | Điều kiện đạt |
 | --- | --- |
@@ -1247,7 +1247,7 @@ Các phụ thuộc dưới đây là điều kiện để nghiệm thu thiết k
 | INT-05 | Phạm vi vùng và điểm chặn liên dịch vụ | Mapping CMS/Core/Analytics; action/resource matrix; E2E list/detail/export, revoke session và checks tại từng mutation | Core/BFF/Profile/Security — Security/UAT |
 | REL-01 | Truy cập tài liệu phục vụ duyệt hồ sơ | Người xử lý chỉ xem tài liệu thuộc hồ sơ được cấp quyền; kiểm URL hết hạn và truy cập ngoài phạm vi | Core/Integration — Security/UAT |
 | REL-02 | Thiết lập vùng chủ quản và Miền cho đại lý | Backfill, nâng contract caller, xác định cutover và bật validation bắt buộc; đo số hồ sơ còn thiếu | Core/BFF — Migration/UAT |
-| REL-03 | Dữ liệu xếp hạng từ Q3/2026 | Cấu hình kỳ đầu theo SRS, backfill dữ liệu trọng số và đối soát trước công bố | Analytics — Migration/UAT |
+| REL-03 | Dữ liệu xếp hạng từ Q3/2026 | Thiết lập kỳ xếp hạng đầu tiên là Q3/2026, backfill dữ liệu trọng số và đối soát trước công bố | Analytics — Migration/UAT |
 | OPS-01 | Capacity, SLO, RTO/RPO và deployment profile | Capacity/cost report, target theo SLI, manifest versioned, dashboard/runbook và restore drill | SRE/DBA — OAT |
 | SEC-01 | Retention và quyền truy cập dữ liệu Cobroker | Retention schedule, encryption/access matrix, purge/hold rules; test quyền hồ sơ, tài liệu, báo cáo và export | Data Owner/Security — Data production |
 
@@ -1258,11 +1258,11 @@ Các quyết định dưới đây ảnh hưởng hành vi sản phẩm hoặc c
 | ID | Quyết định và căn cứ | Phương án trình duyệt | Tác động / tiêu chí đóng | Chủ sở hữu |
 | --- | --- | --- | --- | --- |
 | DEC-01 | Tính duy nhất của hồ sơ cấm bán và lịch sử áp dụng theo BR-03 | Giữ một hồ sơ định danh xuyên vòng đời, dùng supplement/reapply và lưu lịch sử từng lần | BO xác nhận UX/API; nếu cho tạo hồ sơ mới phải đổi unique và migration trước release | BO/Watchlist |
-| DEC-02 | Quyền xem PII theo BR-17 và giới hạn dữ liệu mỗi lần import | Kiểm full PII theo quyền riêng và audit; giữ giới hạn xử lý file có thông báo rõ | Ma trận role/action, export policy, giới hạn file/dòng được ghi vào SRS và L3-API | BO/Security/Watchlist |
+| DEC-02 | Quyền xem PII theo BR-17 và giới hạn dữ liệu mỗi lần import | Kiểm full PII theo quyền riêng và audit; giữ giới hạn xử lý file có thông báo rõ | Ma trận quyền theo vai trò/thao tác, chính sách xuất dữ liệu và giới hạn file/dòng được phê duyệt, đồng bộ vào đặc tả nghiệp vụ và L3-API | BO/Security/Watchlist |
 | DEC-03 | Hạn chế bán: mốc fallback Đại lý, lượt khóa sau grace và xử lý GD trong thời gian cấm | Ưu tiên lastValidDepositDate, sau đó firstActivatedAt; xác định riêng fallback, grace effective date và eligibility | Decision table bao phủ thiếu ngày, ngày biên, lượt quét và giao dịch bị hủy; QA lấy cùng expected | BO/Integration |
 | DEC-04 | Chu kỳ: ưu tiên IMMEDIATE so với terminal và chuyển audience | Giữ terminal cho tới quyết định mở lại; audience change đưa BLOCKED để bảo toàn lịch sử | BO xác định ngày hiệu lực, chính sách giữ/reset kỳ và thông báo; calculator tests cập nhật đồng bộ | BO/Analytics |
 | DEC-05 | Điều kiện hiệu chỉnh liên kết CMS của vùng INACTIVE | Cho phép ngoại lệ hiệu chỉnh CMS để khôi phục liên kết hợp lệ; khóa tên/vai trò và audit đầy đủ | BO xác nhận ngoại lệ, actor được cấp và điều kiện kích hoạt lại | BO/Core |
-| DEC-06 | Phạm vi tùy chọn ranking, quyền import hạng và tập Sale dùng cho thống kê | Công bố ranking theo SRS/ALLOW_TIE; xác định role import và mẫu số từng thống kê; tách bộ lọc dự án thành contract riêng nếu đưa vào phạm vi | Ma trận chức năng/role, metric definition và Schema/OpenAPI được phê duyệt trước UAT | BO/Core/Analytics |
+| DEC-06 | Phạm vi tùy chọn ranking, quyền import hạng và tập Sale dùng cho thống kê | Công bố xếp hạng với quy tắc đồng điểm `ALLOW_TIE`; xác định role import và mẫu số từng thống kê; tách bộ lọc dự án thành contract riêng nếu đưa vào phạm vi | Ma trận chức năng/role, metric definition và Schema/OpenAPI được phê duyệt trước UAT | BO/Core/Analytics |
 
 ## 16.4 Migration & Compatibility Controls
 
@@ -1289,6 +1289,8 @@ Lịch sử dữ liệu cũ được giữ phục vụ đối soát. Cutover kh�
 | Effective-dated | Lưu lịch sử khoảng ngày bắt đầu/kết thúc hiệu lực |
 
 ## B. Tài liệu nghiệp vụ tham chiếu
+
+Các mã US/UC/BR trong từng phân hệ tham chiếu tài liệu nghiệp vụ tương ứng dưới đây. Mỗi yêu cầu được truy vết đến quy tắc thiết kế, hợp đồng dữ liệu và tiêu chí nghiệm thu của phân hệ.
 
 | Tài liệu | Phạm vi nghiệp vụ |
 | --- | --- |
