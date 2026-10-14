@@ -604,7 +604,7 @@ Liên minh khóa agency theo thứ tự ID để giảm deadlock. Import hạng 
 
 | Bảng/nhóm | Trách nhiệm |
 | --- | --- |
-| `users`, `organization_units` | Projection nhân sự/đơn vị |
+| `users`, `organization_units` | Bản dữ liệu nhân sự/đơn vị đồng bộ từ Profile để phục vụ báo cáo |
 | `transactions` | Dữ kiện giao dịch nguồn, eligibility riêng ranking/cycle |
 | `sale_ranking_configs`, `sale_ranking_config_details` | Cấu hình kỳ và các nhóm áp dụng |
 | `sale_ranking_month_buckets` | Slot doanh số/số lượng theo ngày trong tháng |
@@ -628,7 +628,7 @@ Sơ đồ mô tả quan hệ logic giữa các aggregate; khóa ngoại và inde
 
 ### 7.2.2 Dữ liệu cá nhân và sở hữu
 
-Analytics lưu họ tên, định danh, điện thoại/email và tổ chức phục vụ báo cáo; không là nguồn chỉnh sửa hồ sơ. Hạn chế log các trường này, kiểm soát export và file chứng nhận. Retention được phân loại riêng cho projection, báo cáo, chứng nhận và audit theo mục 7.6.
+Profile quản lý thông tin nhân sự, gồm họ tên, thông tin định danh, điện thoại/email và đơn vị tổ chức. Analytics gọi Profile để lấy dữ liệu và tiếp nhận các thay đổi qua hợp đồng đồng bộ. Bản dữ liệu đồng bộ tại Analytics phục vụ tra cứu, lọc và tổng hợp báo cáo; mọi chỉnh sửa thông tin nhân sự được thực hiện tại Profile. Hạn chế log dữ liệu cá nhân, kiểm soát quyền xuất báo cáo và tải file chứng nhận. Thời hạn lưu được phân loại riêng cho bản dữ liệu đồng bộ, báo cáo, chứng nhận và audit theo mục 7.6.
 
 ## 7.3 Dữ liệu Watchlist
 
