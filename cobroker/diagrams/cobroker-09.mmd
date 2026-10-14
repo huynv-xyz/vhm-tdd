@@ -1,0 +1,16 @@
+sequenceDiagram
+    participant E as Job / data-change
+    participant S as CalculatorService
+    participant D as PostgreSQL
+    participant C as Calculator
+    E->>S: recalculate(username)
+    S->>D: Khóa user, đọc đầu vào và kết quả
+    alt Thiếu đầu vào hoặc đổi audience chưa xử lý
+        S->>D: Lưu BLOCKED và lý do
+    else Đầu vào hợp lệ
+        S->>C: startDate, today, configs, facts
+        C-->>S: Timeline, classification, roomExcluded
+        S->>D: Lưu result và periods
+        S->>D: Điều hòa lịch / hủy lịch khi PENDING
+    end
+    S-->>E: Commit hoặc lỗi để xử lý lại

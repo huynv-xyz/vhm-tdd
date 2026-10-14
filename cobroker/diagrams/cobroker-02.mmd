@@ -1,0 +1,10 @@
+erDiagram
+    REGIONS ||--o{ REGION_TEAMS : "lien ket CMS"
+    REGIONS ||--o{ REGION_PROJECTS : "vung ban"
+    REGIONS ||--o{ AGENCY_REGIONS : "chu quan"
+    AGENCY_PROFILES ||--o{ AGENCY_REGIONS : "lich su"
+    AGENCY_PROFILES ||--o{ AGENCY_COBROKER : "nhan su"
+    COBROKER_PROFILES ||--o{ AGENCY_COBROKER : "lien ket"
+    AGENCY_PROFILES ||--o{ LEGAL_ENTITIES : "phap nhan"
+    LEGAL_ENTITIES ||--o{ LEGAL_PROJECTS : "du an"
+    AGENCY_PROFILES ||--o{ ALLIANCES : "dung dau hoac thanh vien"

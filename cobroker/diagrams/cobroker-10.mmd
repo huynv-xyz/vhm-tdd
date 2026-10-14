@@ -1,0 +1,7 @@
+stateDiagram-v2
+    [*] --> OfficialNotMet
+    OfficialNotMet --> OfficialMet: đạt chỉ tiêu
+    OfficialMet --> OfficialNotMet: D+1 sau hết kỳ, mở kỳ mới
+    OfficialNotMet --> Trial: D+1 sau hết kỳ chưa đạt
+    Trial --> OfficialNotMet: D+1 sau ngày đạt thử thách
+    Trial --> TerminationProposed: hết thử thách chưa đạt

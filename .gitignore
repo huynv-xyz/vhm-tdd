@@ -1,0 +1,4 @@
+# Ghi chú và snapshot chỉ dùng trên máy local
+**/agent.md
+**/.sources/
+**/diagrams/cobroker-rendered-*.png

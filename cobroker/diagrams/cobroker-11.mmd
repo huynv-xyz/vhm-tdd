@@ -1,0 +1,14 @@
+sequenceDiagram
+    participant B as BFF
+    participant C as Core
+    participant D as Core DB
+    B->>C: agencyId, targetRegion, effectiveFrom, reason
+    C->>D: Khóa vùng rồi đại lý
+    C->>D: Kiểm organization, trạng thái, lịch hiện hành/tương lai
+    alt Ngày/quan hệ không hợp lệ
+        C-->>B: Lỗi, không đổi dữ liệu
+    else Hợp lệ
+        C->>D: Đóng quan hệ cũ tại D-1
+        C->>D: Tạo quan hệ mới tại D và audit
+        C-->>B: Kết quả đã lưu
+    end

@@ -1,0 +1,7 @@
+erDiagram
+    USERS ||--o{ TRANSACTIONS : "username logic"
+    USERS ||--o{ MONTH_BUCKETS : "tong hop"
+    MONTH_BUCKETS ||--o{ QUARTER_BUCKETS : "tong hop"
+    CONFIGS ||--o{ CONFIG_DETAILS : "doi tuong"
+    CYCLE_RUNS ||--o{ RESULTS : "ket qua"
+    USERS ||--o{ RESULTS : "username logic"

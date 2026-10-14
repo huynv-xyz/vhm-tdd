@@ -1,0 +1,17 @@
+sequenceDiagram
+    participant B as BFF/Caller
+    participant W as Watchlist
+    participant D as Watchlist DB
+    participant O as Outbox sender
+    participant P as Profile/History
+    B->>W: Tạo/bổ sung/gỡ theo actor
+    W->>D: Khóa định danh, đọc state/version
+    W->>D: Validate và lưu control + outbox
+    W-->>B: Kết quả nghiệp vụ đã commit
+    O->>D: Claim outbox, đọc controls hiện hành
+    O->>P: Đồng bộ sale_controls/status hoặc history
+    alt Thành công
+        O->>D: Ghi nhận hoàn tất
+    else Lỗi / chưa rõ kết quả
+        O->>D: Ghi lỗi, đối soát/retry theo contract
+    end

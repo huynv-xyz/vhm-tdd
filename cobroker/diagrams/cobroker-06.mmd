@@ -1,0 +1,14 @@
+sequenceDiagram
+    participant S as SDK qua BFF/domain
+    participant E as OCR eKYC
+    participant F as FPT
+    S->>E: init_session
+    E->>F: Thêm credential, gọi một lần
+    F-->>E: Session response
+    E-->>S: Response theo contract SDK
+    S->>E: OCR / liveness / NFC theo phiên
+    E->>F: Forward đồng bộ
+    F-->>E: HTTP status + body
+    E-->>S: Preserve contract, không auto retry
+    S->>E: Core query by-session sau luồng
+    E-->>S: Kết quả/evidence theo quyền

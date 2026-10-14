@@ -1,0 +1,16 @@
+flowchart TB
+    G["Ingress / API Gateway / BFF"] --> C["Core pods"]
+    G --> A["Analytics pods"]
+    G --> W["Watchlist pods"]
+    C --> E["OCR/eKYC pods"]
+    C --> DB["PostgreSQL theo ownership"]
+    A --> DB
+    W --> DB
+    E --> DB
+    C --> R["Redis"]
+    A --> R
+    W --> R
+    A --> K["Kafka"]
+    W --> K
+    E --> K
+    E --> X["Private File / FPT egress"]

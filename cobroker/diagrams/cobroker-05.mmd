@@ -1,0 +1,24 @@
+sequenceDiagram
+    participant U as Web/App
+    participant B as BFF/Core
+    participant E as OCR eKYC
+    participant Q as Outbox/Kafka/Worker
+    participant F as FPT
+    participant FS as File Service
+    U->>B: Chuẩn bị upload và nộp media refs
+    B->>E: POST media/prepare-upload
+    E-->>B: Media refs / upload contract
+    B-->>U: Thông tin upload
+    U->>FS: Upload theo contract
+    U->>B: Tạo OCR hồ sơ
+    B->>E: POST ocrs + Idempotency-Key
+    E->>Q: Lưu request/outbox, enqueue
+    E-->>B: Accepted + OCR ID
+    Q->>F: Submit OCR
+    F-->>Q: Pending / kết quả
+    Q->>Q: Schedule poll, không giữ transaction chờ
+    U->>B: Tra trạng thái
+    B->>E: GET ocrs/{id}
+    E-->>B: Status, outcome, result
+    B->>B: Đối soát dữ liệu và điều kiện hồ sơ
+    B-->>U: Kết quả nghiệp vụ / yêu cầu bổ sung

@@ -1,0 +1,6 @@
+erDiagram
+    USERS ||--o{ TRANSACTIONS : "username logic"
+    USERS ||--o| SALES_CYCLE_RESULTS : "ket qua"
+    USERS ||--o{ SALES_CYCLE_PERIODS : "timeline"
+    SALES_CYCLE_CONFIGS ||--o{ SALES_CYCLE_PERIODS : "snapshot ap dung"
+    SALES_CYCLE_PERIODS ||--o{ SALES_CYCLE_NOTIFICATIONS : "lich logic"
