@@ -675,11 +675,11 @@ ERD biểu diễn quan hệ logic; snapshot trong kỳ lưu thông số cấu h�
 
 Query có trạng thái stale khi ngày bán và kết quả áp dụng chưa khớp. BLOCKED có thể giữ lịch sử cũ để đối soát; consumer không được coi lịch sử giữ lại là quyết định mới còn hợp lệ.
 
-### 7.4.3 PII và lưu giữ
+### 7.4.3 Lưu giữ dữ liệu chu kỳ và lịch sử xuất báo cáo
 
-Thông tin liên hệ/định danh chỉ phục vụ người có quyền báo cáo. Export chứa dữ liệu cá nhân cần audit truy cập và quản lý file. Kỳ, lịch và receipt gửi thuộc các nhóm retention riêng; audit export lưu actor, thời điểm và phạm vi dữ liệu theo mục 7.6.
+Kỳ bán hàng, lịch thông báo và xác nhận gửi được quản lý thời hạn lưu riêng theo mục 7.6. Lịch sử xuất báo cáo ghi nhận người thực hiện, thời điểm và phạm vi dữ liệu.
 
-## 7.5 Data Flow và dữ liệu cá nhân
+## 7.5 Luồng dữ liệu giữa các dịch vụ
 
 | Dữ liệu | Nguồn chuẩn → bản sao/đích | Kiểm soát |
 | --- | --- | --- |
@@ -690,13 +690,11 @@ Thông tin liên hệ/định danh chỉ phục vụ người có quyền báo c
 | Cấm/hạn chế | Watchlist → Profile/caller check/market | Outbox lag, tập kiểm soát hiện hành, công khai đúng trạng thái |
 | Chu kỳ/hạn mức | Analytics result → consumer | BLOCKED/null không được chuyển thành đủ điều kiện |
 
-CCCD, điện thoại, email, giấy tờ, selfie/video và nội dung vi phạm cần kiểm soát theo mục đích truy cập. Không log raw request/response, signed URL hoặc credential. Xóa media không mặc định xóa lịch sử quyết định; giữ lịch sử không đồng nghĩa cho phép giữ media vô thời hạn.
-
 ## 7.6 Retention, Consent & Ownership
 
 | Nhóm dữ liệu | Chủ sở hữu | Quy tắc quản lý |
 | --- | --- | --- |
-| Hồ sơ, CCCD, liên hệ, hợp đồng | Core/Data Owner | Giới hạn mục đích, quyền truy cập và thời hạn lưu theo loại hồ sơ |
+| Hồ sơ và hợp đồng Cobroker | Core/Data Owner | Giới hạn mục đích, quyền truy cập và thời hạn lưu theo loại hồ sơ |
 | Tham chiếu tài liệu và kết quả đối soát hồ sơ | Core/Data Owner | Lưu dữ liệu tối thiểu phục vụ duyệt; quyền xem theo hồ sơ và retention của Cobroker |
 | Facts/projection và kết quả ranking/cycle | Analytics/Data Owner | Giữ dữ liệu đủ cho đối soát và tái dựng; purge theo kỳ và quan hệ phụ thuộc |
 | Sale control và lịch sử quyết định | Watchlist/Data Owner | Bảo toàn lịch sử áp dụng/gỡ; công khai tuân theo status và quyền |
@@ -1217,7 +1215,7 @@ Test report ghi phiên bản phát hành, cấu hình, dữ liệu, môi trườ
 
 ## 15.3 Test Data & Acceptance
 
-Dùng dữ liệu giả, không đưa CCCD/ảnh/video/credential/signed URL thật vào fixture hoặc report. Tập dữ liệu phải bao gồm ngày cuối tháng, nhiều quý, lịch tương lai, nhiều kiểm soát một tài khoản và user đa role/đa vùng. Contract tests xác minh cả successful và forbidden/conflict/unknown path, không chỉ HTTP 200.
+Sử dụng dữ liệu giả lập cho kiểm thử. Tập dữ liệu phải bao gồm ngày cuối tháng, nhiều quý, lịch tương lai, nhiều kiểm soát một tài khoản và user đa role/đa vùng. Contract tests xác minh cả successful và forbidden/conflict/unknown path, không chỉ HTTP 200.
 
 # 16. Risks & Open Issues
 
