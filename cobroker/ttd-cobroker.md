@@ -176,7 +176,7 @@ Ví dụ minh họa: doanh số quý trước 10 tỷ, quý này 20 tỷ, trọn
 | Tạo/bổ sung/áp dụng lại | Khóa định danh, kiểm trùng, quản lý tài khoản liên kết | Mỗi thao tác lưu quyết định và lịch sử; xử lý đồng thời bằng lock/version |
 | Gỡ | Chuyển RELEASED, lưu lý do và phát outbox | Gỡ cấm không tự kích hoạt tài khoản |
 | Công khai/ngừng công khai | Quản lý publicStatus độc lập status áp dụng | API thị trường chỉ tra bản ghi ACTIVE/PUBLISHED |
-| Import | Upload → staging → validate → confirm → apply | Có kết quả từng dòng và file lỗi |
+| Import | Tải tệp → lưu dữ liệu tạm → kiểm tra hợp lệ → xác nhận → ghi dữ liệu chính thức | Có kết quả từng dòng và file lỗi |
 | Kiểm tra điều kiện | API checks/statuses tại đăng ký, kích hoạt, đổi định danh, gán role và eKYC | Caller thực thi quyết định chặn trước mutation nghiệp vụ |
 | Tự động hạn chế bán | Facts → mốc tham chiếu → ngưỡng → ratio guard → outbox | Dry-run trước rollout; chỉ phát lệnh sau khi qua kiểm soát dữ liệu |
 
@@ -320,7 +320,7 @@ Ranking query có statement timeout 10 giây để bảo vệ tài nguyên DB. S
 | Persistence | PostgreSQL, Spring Data JPA, Liquibase | Transaction, unique/version, lịch sử hiệu lực; migration là artefact quản lý |
 | Messaging | Kafka và outbox | Tách tích hợp khỏi request, chấp nhận phát lặp và xử lý idempotent |
 | Điều phối | Redis/ShedLock cho ranking; Redisson cho scan; DB background job cho cycle | Khóa lịch chạy và khóa dữ liệu được thiết kế theo đơn vị công việc |
-| Excel | Apache POI và file service | Import có staging/preview, export kiểm giới hạn bộ nhớ |
+| Excel | Apache POI và file service | Import có vùng dữ liệu tạm và bước xem trước kết quả; export kiểm giới hạn bộ nhớ |
 | Tích hợp hồ sơ | File Service và dịch vụ OCR/eKYC | Core lưu tham chiếu tài liệu, yêu cầu và kết quả phục vụ đối soát |
 | History | Outbox và dịch vụ lịch sử/BI tùy domain | History bên ngoài có độ trễ, không thay transaction nghiệp vụ |
 | Quan sát | Logging/metrics/tracing theo nền tảng chung | Correlate request, job và outbox; dashboard theo mục 13 |
@@ -635,13 +635,13 @@ Analytics lưu họ tên, định danh, điện thoại/email và tổ chức ph
 | Bảng | Trách nhiệm / thuộc tính |
 | --- | --- |
 | `sale_control` | UUIDv7, mã CB/HC, type/status/source/publicStatus, CCCD/mã nhân viên, mảng phones/usernames, snapshot accounts, đơn vị, effective_date, content, attributes, version, lý do gỡ |
-| `import_job`, `import_item` | File ref, staging từng dòng, lỗi, tiến độ confirm/apply và thời hạn |
+| `import_job`, `import_item` | Tham chiếu tệp, dữ liệu tạm từng dòng, lỗi, tiến độ xác nhận/ghi dữ liệu và thời hạn lưu |
 | `scan_run` | Loại quét, dry-run, số ứng viên, mẫu số, ratio, trạng thái/kết quả |
 | `outbox_message` | PROFILE_SALE_CONTROLS và HISTORY_EVENT, retry/lease/outcome |
 
 History nghiệp vụ được phát sang BI qua Kafka và đọc qua query runner. Watchlist lưu domain state và outbox để theo dõi delivery. CCCD/mã nhân viên BANNED có unique xuyên trạng thái; phone là array và khóa định danh, không có cùng unique constraint đơn giản như CCCD.
 
-Import đi qua PENDING/PROCESSING/VALIDATED/APPLYING/APPLIED hoặc FAILED/EXPIRED theo job. Các dòng phải giữ lỗi và kết quả áp dụng để caller phân biệt validate thành công với đã có tác động nghiệp vụ. Staging hết hạn sau 24 giờ; giới hạn xử lý 20.000 dòng được quản lý tại DEC-02 cùng quyền hiển thị/export dữ liệu.
+Import đi qua PENDING/PROCESSING/VALIDATED/APPLYING/APPLIED hoặc FAILED/EXPIRED theo job. Các dòng phải giữ lỗi và kết quả áp dụng để caller phân biệt validate thành công với đã có tác động nghiệp vụ. Dữ liệu import tạm hết hạn sau 24 giờ; giới hạn xử lý 20.000 dòng được quản lý tại DEC-02 cùng quyền hiển thị/export dữ liệu.
 
 ## 7.4 Dữ liệu chu kỳ bán hàng
 
@@ -1048,7 +1048,7 @@ Sơ đồ biểu diễn topology logic. Việc phân bổ database instance, bro
 | Cycle | Job 00:00; notification mỗi 30 giây, batch 100 | Lịch chạy độc lập ranking; INT-02 cung cấp ngày bán và dữ liệu đối soát |
 | Watchlist scanner | Disabled, dry-run=true; 02:00; batch 500; maxRatio 0,05; minSample 1.000 | INT-01 contract test và dry-run report đạt trước bật thực thi |
 | Rank import đại lý | Redis preview 15 phút, 5 MB/1.000 dòng | Kiểm giới hạn gateway và lỗi preview hết hạn |
-| Watchlist import | Staging 24 giờ, 20.000 dòng | DEC-02 xác định giới hạn dòng; cleanup theo thời hạn staging |
+| Watchlist import | Lưu dữ liệu import tạm trong 24 giờ, tối đa 20.000 dòng | DEC-02 xác định giới hạn dòng; dọn dữ liệu tạm khi hết thời hạn lưu |
 | Tích hợp xác minh hồ sơ | Địa chỉ dịch vụ, thông tin xác thực S2S và timeout caller | Kiểm liên kết hồ sơ/yêu cầu và xử lý kết quả theo L3-IDV |
 
 ## 10.3 Migration & Release Strategy
