@@ -8,7 +8,7 @@ flowchart LR
     C --> P["Profile / IAM / CMS"]
     P --> A
     D["Sales Pipeline"] --> A
-    W -. "Facts contract chưa hoàn tất" .-> A
+    W -->|"Sale activity facts"| A
     W --> P
     C --> H["History / Notification / File"]
     W --> H
