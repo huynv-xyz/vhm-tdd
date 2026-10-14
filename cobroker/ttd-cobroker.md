@@ -3,16 +3,15 @@
 | Trường | Nội dung |
 | --- | --- |
 | Trạng thái | DRAFT — trình thẩm định kiến trúc |
-| Phiên bản & lịch sử thay đổi | v0.2 — 14/10/2026 — Chuẩn hóa thiết kế tổng thể Cobroker và bốn phân hệ nghiệp vụ |
+| Phiên bản & lịch sử thay đổi | v0.3 — 14/10/2026 — Thiết kế nghiệp vụ Cobroker và bốn phân hệ; xác định ranh giới dịch vụ tích hợp |
 | Hệ thống | VHM Agent / Cobroker |
-| Phạm vi thiết kế | CoBroker Core, Sales Analytics, Watchlist và tích hợp OCR/eKYC FPT |
+| Phạm vi thiết kế | CoBroker Core, Sales Analytics và Watchlist |
 | Nhóm chịu trách nhiệm | Backend · Product/Business · Solution Architecture · Integration · ANBM/Security · Data Owner · SRE/DBA |
 | Cơ chế thẩm định | Workflow phê duyệt tài liệu; trách nhiệm theo Review Responsibility Matrix |
 | Nguồn nghiệp vụ | Bốn SRS tại Appendix B |
 | Tài liệu L3 | API/event contract, data migration, security matrix, test specification và runbook theo L3 Artefact Register |
-| Tiêu chuẩn tham chiếu | Cấu trúc [L2 OCR/eKYC](https://vin3s.atlassian.net/wiki/spaces/VARW/pages/3014268156); quy chuẩn API, IAM, dữ liệu và vận hành của dự án |
 
-Tài liệu đặc tả kiến trúc mục tiêu của Cobroker, bao gồm ranh giới dịch vụ, quy tắc nghiệp vụ, hợp đồng tích hợp, mô hình dữ liệu và các điều kiện nghiệm thu. Các yêu cầu trong tài liệu là cơ sở triển khai và kiểm thử. Tiến độ hoàn thiện tích hợp và các quyết định nghiệp vụ cần phê duyệt được quản lý tập trung tại mục 16.
+Tài liệu đặc tả kiến trúc mục tiêu của Cobroker, bao gồm ranh giới dịch vụ, quy tắc nghiệp vụ, hợp đồng tích hợp, mô hình dữ liệu và các điều kiện nghiệm thu. Các yêu cầu trong tài liệu là cơ sở triển khai và kiểm thử. Các điều kiện tích hợp và quyết định nghiệp vụ cần phê duyệt được quản lý tập trung tại mục 16.
 
 **Review Responsibility Matrix**
 
@@ -33,22 +32,22 @@ Reviewer, quyết định, ngày xác nhận và evidence được ghi tại wor
 | --- | --- |
 | DRAFT → UNDER REVIEW | Nội dung, sơ đồ và contract đủ phạm vi; quyết định nghiệp vụ và phụ thuộc có ID, owner, tác động và phương án xử lý |
 | UNDER REVIEW → APPROVED | Hoàn tất thẩm định nghiệp vụ, kiến trúc, tích hợp và bảo mật; các ngoại lệ có risk acceptance và thời hạn |
-| APPROVED → IMPLEMENTATION BASELINE | API/event schema, migration, cấu hình triển khai và test specification được quản lý phiên bản |
+| APPROVED → IMPLEMENTATION BASELINE | API/event schema, kế hoạch chuyển đổi dữ liệu, cấu hình triển khai và test specification được quản lý phiên bản |
 | IMPLEMENTATION BASELINE → GO-LIVE | UAT, security, performance, migration và restore đạt tiêu chí; dashboard và runbook sẵn sàng vận hành |
 
 **L3 Artefact Register**
 
 | ID | Artefact | Chủ sở hữu | Nội dung thẩm định / điều kiện nghiệm thu |
 | --- | --- | --- | --- |
-| L3-API | API nghiệp vụ và ma trận lỗi | Backend/Integration | Mục 6; DTO/OpenAPI versioned; validation và consumer contract tests |
-| L3-OCR | Contract OCR/eKYC FPT và media | Core/OCR/Integration | Mục 6.3, 8.2; SDK compatibility, idempotency và source authorization |
+| L3-API | API nghiệp vụ và ma trận lỗi | Backend/Integration | Mục 6; Schema/OpenAPI versioned; validation và consumer contract tests |
+| L3-IDV | Contract xác minh danh tính của Cobroker | Core/Integration | Mục 6.3, 8.2; liên kết kết quả với hồ sơ, xử lý sai lệch và phân quyền truy cập |
 | L3-DATA | DDL, migration và backfill | Backend/DBA | Mục 7, 10; unique/version, overlap, đối soát dữ liệu và rollback compatibility |
 | L3-INT | Facts, ngày bán, notification, chứng nhận và scope vùng | Integration/BFF | INT-01…INT-05 tại mục 16.2; producer/consumer cùng phiên bản và E2E |
 | L3-SEC | Ma trận role/action/resource | Security/Backend | Mục 9; test quyền cho list/detail/export/history/media/config |
-| L3-QA | Test specification và test report | QA | Mục 15; report gắn commit/image/môi trường tại quality gate |
+| L3-QA | Test specification và test report | QA | Mục 15; report gắn phiên bản phát hành/môi trường tại quality gate |
 | L3-OPS | Deployment, capacity, dashboard và runbook | SRE/DBA | Mục 10–14; OAT và diễn tập khôi phục |
 
-Trạng thái triển khai được quản lý tại delivery register mục 16.2; quyết định sản phẩm tại mục 16.3. L3 artefact và evidence nghiệm thu được gắn vào gate tương ứng.
+Điều kiện nghiệm thu tích hợp được quy định tại mục 16.2; quyết định sản phẩm tại mục 16.3. L3 artefact và evidence nghiệm thu được gắn vào gate tương ứng.
 
 # 1. Business Objectives & Scope
 
@@ -58,7 +57,7 @@ Cobroker quản lý vòng đời hồ sơ cộng tác viên/Sale và đại lý:
 
 | Năng lực | Mục tiêu | Service sở hữu |
 | --- | --- | --- |
-| Nền tảng Cobroker | Onboarding, OCR/eKYC, hồ sơ, phê duyệt, đại lý, ASA/nhân sự, cập nhật hồ sơ | CoBroker Core |
+| Nền tảng Cobroker | Đăng ký, xác minh danh tính, hồ sơ, phê duyệt, đại lý, ASA/nhân sự, cập nhật hồ sơ | CoBroker Core |
 | 1. Xếp hạng Sale | Báo cáo doanh số quý, phân hạng, cấu hình, vinh danh | Sales Analytics |
 | 2. Cấm/hạn chế bán | Quản lý đối tượng, phạm vi tài khoản, công khai/tra cứu, kiểm soát tự động | Watchlist |
 | 3. Chu kỳ bán hàng | Chính thức/thử thách, cảnh báo, đề xuất ngừng hợp tác và điều kiện hạn mức | Sales Analytics |
@@ -68,11 +67,11 @@ Cobroker quản lý vòng đời hồ sơ cộng tác viên/Sale và đại lý:
 
 Phạm vi bao gồm nền tảng Cobroker và bốn phân hệ trong **một tài liệu L2 thống nhất**. Tài liệu mô tả trách nhiệm service, quy tắc, API, dữ liệu, luồng thành công/lỗi, quyền, triển khai và kiểm thử.
 
-Tích hợp danh tính sử dụng **FPT qua service OCR/eKYC**. Service OCR/eKYC sở hữu credential, giao thức provider và vòng đời xử lý; Core sở hữu đối soát danh tính và quyết định nghiệp vụ hồ sơ.
+Cobroker sử dụng **dịch vụ OCR/eKYC** để xác minh danh tính. Dịch vụ này là một hệ thống bên ngoài ranh giới thiết kế: Cobroker gửi yêu cầu, nhận kết quả và đối chiếu với hồ sơ để quyết định bước nghiệp vụ tiếp theo.
 
 ## 1.3 Out of Scope
 
-Không thiết kế lại Pipeline/SAP, Profile/IAM, CMS, File Service hoặc nội bộ thuật toán FPT. Không đồng nhất đề xuất chấm dứt chu kỳ với khóa tài khoản. Check-in nằm ngoài phạm vi bản thiết kế này. BFF/UI triển khai theo contract và ma trận quyền của từng phân hệ; nghiệm thu tại Integration và UAT gate.
+Thiết kế nội bộ của OCR/eKYC, Pipeline/SAP, Profile/IAM, CMS và File Service nằm ngoài phạm vi tài liệu. Các hệ thống này được mô tả qua trách nhiệm cung cấp dữ liệu và hợp đồng tích hợp với Cobroker. Không đồng nhất đề xuất chấm dứt chu kỳ với khóa tài khoản. Check-in nằm ngoài phạm vi bản thiết kế này. BFF/UI triển khai theo contract và ma trận quyền của từng phân hệ; nghiệm thu tại Integration và UAT gate.
 
 ## 1.4 Assumptions, Constraints & Dependencies
 
@@ -86,12 +85,11 @@ Ngày nghiệp vụ dùng múi giờ Việt Nam. Profile là nguồn nhân sự/
 
 ```mermaid
 flowchart LR
-    U["Web / App / SDK"] --> B["Agent / Cobroker BFF"]
+    U["Web / App"] --> B["Agent / Cobroker BFF"]
     B --> C["CoBroker Core"]
     B --> A["Sales Analytics"]
     B --> W["Watchlist"]
     C --> E["OCR/eKYC service"]
-    E --> F["FPT OCR / eKYC"]
     C --> P["Profile / IAM / CMS"]
     P --> A
     D["Sales Pipeline"] --> A
@@ -99,15 +97,12 @@ flowchart LR
     W --> P
     C --> H["History / Notification / File"]
     W --> H
-    E --> H
     C --> CD[("Core DB")]
     A --> AD[("Analytics DB")]
     W --> WD[("Watchlist DB")]
-    E --> ED[("OCR/eKYC DB")]
     A <--> K["Kafka / Outbox"]
     W --> K
     C --> K
-    E <--> K
 ```
 
 Sơ đồ thể hiện kiến trúc mục tiêu và trách nhiệm tích hợp. Giao thức, chế độ đồng bộ/bất đồng bộ và contract dữ liệu được quy định tại mục 6. Watchlist đọc facts từ Analytics qua INT-01; dữ liệu nghiệp vụ được ghi tại dịch vụ sở hữu.
@@ -116,11 +111,11 @@ Sơ đồ thể hiện kiến trúc mục tiêu và trách nhiệm tích hợp. 
 
 | Nguyên tắc | Áp dụng |
 | --- | --- |
-| Sở hữu dữ liệu theo domain | Core không tính xếp hạng; Watchlist không thay calculator chu kỳ; OCR/eKYC sở hữu provider integration |
+| Sở hữu dữ liệu theo domain | Core sở hữu hồ sơ/đại lý; Analytics sở hữu ranking/chu kỳ; Watchlist sở hữu quyết định cấm/hạn chế |
 | Tách đọc nguồn, tính toán và ghi kết quả | Calculator ranking/cycle nhận đầu vào; service điều phối transaction; job điều phối lịch |
 | Nhất quán trong DB, tích hợp eventual consistency | Ghi domain và outbox trong cùng transaction đối với side effect phát qua outbox; theo dõi delivery độc lập |
-| Không giữ transaction khi chờ hệ thống ngoài | OCR chờ provider bằng lịch poll; notification chuẩn bị/gửi/ghi kết quả tách pha |
-| Bảo vệ retry theo tác động | Consumer nhận lặp phải an toàn; không tự retry mutation eKYC hoặc submit OCR không rõ kết quả |
+| Không giữ transaction khi chờ hệ thống ngoài | Core tách gọi dịch vụ xác minh khỏi transaction hồ sơ; notification tách chuẩn bị/gửi/ghi kết quả |
+| Bảo vệ retry theo tác động | Consumer nhận lặp phải an toàn; Core đối soát yêu cầu đã gửi trước khi phát lại thao tác có tác động |
 | Phân quyền trên dữ liệu | Scope phải đi từ actor tin cậy; list/detail/export đều phải kiểm; filter không thay authorization |
 | Lịch sử có hiệu lực | Vùng chủ quản/dự án lưu ngày bắt đầu/kết thúc; không suy quyền hiện tại cho giao dịch lịch sử |
 
@@ -137,8 +132,7 @@ Transaction kết thúc tại database của từng dịch vụ. Tích hợp li�
 | Nhóm | Quy tắc và kết quả |
 | --- | --- |
 | Đăng ký và hồ sơ | Tạo hồ sơ theo account; chọn đội nhóm, bổ sung thông tin định danh, chứng chỉ môi giới, ảnh đại diện và tài liệu |
-| OCR tài liệu | Chuẩn bị upload, tạo phiên OCR, thăm dò và đối soát CCCD hai mặt/phụ lục lao động; không chờ FPT trong request tạo OCR |
-| eKYC SDK | Khởi tạo phiên, SDK OCR/liveness/NFC qua service FPT; Core đọc kết quả theo session và áp dụng kiểm tra hồ sơ |
+| Xác minh danh tính | Liên kết tài liệu và yêu cầu xác minh với hồ sơ; nhận kết quả từ OCR/eKYC, đối chiếu CCCD/thông tin cá nhân và điều kiện hồ sơ |
 | Nộp và duyệt | Nộp hồ sơ, nhận xử lý/phân công, phê duyệt, chuyển kiểm tra thủ công hoặc từ chối theo quyền |
 | Đại lý | Tạo/xem/cập nhật hồ sơ, nhân sự, chi nhánh, pháp nhân, kích hoạt/ngừng và lịch sử |
 | Yêu cầu cập nhật | ARM tạo yêu cầu; ASA cập nhật bản nháp, gửi duyệt; ARM duyệt/phản hồi/từ chối/hủy; job hết hạn |
@@ -210,7 +204,7 @@ Scanner lập danh sách ứng viên PENDING, kiểm tỷ lệ bất thường t
 
 ## 3.4 Phân hệ 3 — Theo dõi chu kỳ bán hàng
 
-### 3.4.1 Ma trận SRS
+### 3.4.1 Ma trận yêu cầu nghiệp vụ
 
 | SRS | Thiết kế | Kết quả nghiệp vụ |
 | --- | --- | --- |
@@ -223,7 +217,7 @@ Scanner lập danh sách ứng viên PENDING, kiểm tỷ lệ bất thường t
 
 ### 3.4.2 Ngày và giao dịch
 
-`end = start.plusMonths(months).minusDays(1)`; ngày đầu/cuối đều thuộc kỳ. Đây là phép cộng tháng lịch của Java: 31/01/2026 + 1 tháng − 1 ngày = 27/02/2026; không dùng công thức này cho ngưỡng hạn chế bán của watchlist vốn không trừ một ngày.
+Ngày kết thúc = ngày bắt đầu + số tháng lịch − 1 ngày; ngày đầu/cuối đều thuộc kỳ. Ví dụ: 31/01/2026 + 1 tháng − 1 ngày = 27/02/2026; không dùng công thức này cho ngưỡng hạn chế bán của watchlist vốn không trừ một ngày.
 
 Count chỉ lấy facts đúng username, `cycleEligible=true`, ngày ký cọc không sau ngày đang xét. Contract giao dịch ánh xạ mua sơ cấp `businessType=1, serviceType=2`, có deposit date, liquidation `not_liquidated`; `liquidated` bị loại. Mapping được quản lý phiên bản trong contract Pipeline–Analytics.
 
@@ -301,18 +295,18 @@ Quản lý vùng được xác định từ CMS; quyền đọc là hợp các p
 
 # 4. Non-Functional Requirements
 
-Các mục tiêu áp dụng theo từng loại tải. Thời gian provider OCR/eKYC được đo riêng với API nghiệp vụ; batch, import và export có cửa sổ xử lý riêng.
+Các mục tiêu áp dụng theo từng loại tải. Thời gian chờ dịch vụ xác minh được đo riêng với API nghiệp vụ Cobroker; batch, import và export có cửa sổ xử lý riêng.
 
 | ID | Hạng mục | Tiêu chí thiết kế / nghiệm thu | Cách đo |
 | --- | --- | --- | --- |
 | NFR-01 | Chính xác tiền | numeric(24,2); bucket VND × 100; so điểm trước làm tròn; từ chối overflow | Test giá trị biên và đối soát tổng nguồn/bucket |
 | NFR-02 | Chính xác thời gian | Tháng lịch, Asia/Ho_Chi_Minh, ngày đầu/cuối inclusive | Test ngày31, năm nhuận, D−1/D+1, chuyển quý/năm |
-| NFR-03 | Idempotency | Replay không nhân đôi doanh số, quan hệ hoặc quyết định; same OCR key/payload trả cùng request | Concurrent/replay/crash tests |
+| NFR-03 | Idempotency | Replay không nhân đôi doanh số, quan hệ, yêu cầu hồ sơ hoặc quyết định phê duyệt | Concurrent/replay/crash tests |
 | NFR-04 | Phân quyền | Mọi list/detail/export/history/media/config áp action + scope | Negative tests trên BFF và service |
 | NFR-05 | Watchlist check latency | Mục tiêu p95 ≤ 50 ms ở 50 rps tại service, không tính mạng bên ngoài | Load test endpoint check trên dữ liệu production-like |
 | NFR-06 | Tập dữ liệu lớn | Phân trang DB, batch hữu hạn; ranking/cycle export tối đa 50.000 Sale | Tải đồng thời query/export/import/job, đo heap và query plan |
-| NFR-07 | Data freshness | Ranking tổng hợp ngày trước; cycle cập nhật theo job/sự kiện; side effect có delivery status | Đo source watermark, data lag và oldest pending |
-| NFR-08 | Provider isolation | OCR accepted sau commit/outbox; eKYC đồng bộ và không auto retry mutation | Contract tests timeout/error/idempotency |
+| NFR-07 | Data freshness | Ranking tổng hợp ngày trước; cycle cập nhật theo job/sự kiện; side effect có delivery status | Đo mốc đồng bộ dữ liệu nguồn, data lag và oldest pending |
+| NFR-08 | Cô lập dịch vụ phụ thuộc | Lỗi/timeout xác minh không tự duyệt hoặc làm mất hồ sơ; kết quả chỉ áp dụng đúng hồ sơ/yêu cầu | Contract tests kết quả thành công, sai lệch, pending và timeout |
 | NFR-09 | Observability | Correlation xuyên HTTP/job/outbox; log không chứa raw PII/credential/signed URL | Trace mẫu, kiểm redaction và dashboard |
 | NFR-10 | Recovery | Restore đồng bộ domain data/job/outbox; đối soát side effect sau restore | DR rehearsal theo RTO/RPO tại OPS-01 |
 
@@ -322,12 +316,12 @@ Ranking query có statement timeout 10 giây để bảo vệ tài nguyên DB. S
 
 | Thành phần | Công nghệ / trách nhiệm | Lý do và giới hạn |
 | --- | --- | --- |
-| Runtime | Java 25, Spring Boot 4; version patch theo pom từng service | Dependency được quản lý theo version pom của từng service |
+| Runtime | Java 25, Spring Boot 4; phiên bản runtime được quản lý theo tiêu chuẩn nền tảng | Thống nhất nền tảng vận hành và quản lý phiên bản thư viện |
 | Persistence | PostgreSQL, Spring Data JPA, Liquibase | Transaction, unique/version, lịch sử hiệu lực; migration là artefact quản lý |
 | Messaging | Kafka và outbox | Tách tích hợp khỏi request, chấp nhận phát lặp và xử lý idempotent |
 | Điều phối | Redis/ShedLock cho ranking; Redisson cho scan; DB background job cho cycle | Khóa lịch chạy và khóa dữ liệu được thiết kế theo đơn vị công việc |
 | Excel | Apache POI và file service | Import có staging/preview, export kiểm giới hạn bộ nhớ |
-| Media/OCR | File Service và service OCR/eKYC FPT | Credential/provider semantics tách khỏi Core |
+| Tích hợp hồ sơ | File Service và dịch vụ OCR/eKYC | Core lưu tham chiếu tài liệu, yêu cầu và kết quả phục vụ đối soát |
 | History | Outbox và dịch vụ lịch sử/BI tùy domain | History bên ngoài có độ trễ, không thay transaction nghiệp vụ |
 | Quan sát | Logging/metrics/tracing theo nền tảng chung | Correlate request, job và outbox; dashboard theo mục 13 |
 
@@ -342,13 +336,12 @@ Các quyết định công nghệ ưu tiên tính nhất quán nghiệp vụ, kh
 | BFF → Core | Hồ sơ, đại lý, vùng, liên minh, pháp nhân | REST/HTTPS, sync | Actor/role, organization, resource IDs; gate BFF |
 | BFF → Analytics | Ranking/cycle/config/export | REST/HTTPS, sync | ServiceResponse hoặc XLSX; scope tin cậy |
 | BFF / caller được cấp → Watchlist | CRUD/check/lookup | REST/HTTPS, sync | Tách realm Internal/Check/Market và CIDR |
-| Core → OCR/eKYC | OCR và đọc kết quả eKYC | REST/HTTPS | Basic S2S; referenceId/session; không truyền credential FPT từ client |
-| OCR/eKYC → FPT | Submit/poll OCR và SDK eKYC | REST/HTTPS | OCR async orchestration; SDK sync, không auto retry mutation |
+| Core → OCR/eKYC | Gửi yêu cầu và lấy kết quả xác minh hồ sơ | REST/HTTPS | Xác thực S2S, referenceId/session; kết quả gắn đúng hồ sơ |
 | Profile / Pipeline → Analytics | Nhân sự/tổ chức/giao dịch | Import và event | Version nguồn, dữ kiện eligibility riêng từng nghiệp vụ |
-| Watchlist → Analytics | Facts quét hạn chế bán | REST, sync theo batch | INT-01: facts theo cursor, source version và mốc giao dịch |
+| Watchlist → Analytics | Facts quét hạn chế bán | REST, sync theo batch | INT-01: facts theo cursor, phiên bản dữ liệu nguồn và mốc giao dịch |
 | Watchlist → Profile | sale_controls/trạng thái tài khoản | Outbox → Thrift | Tính lại trạng thái hiệu lực lúc gửi |
 | Core / Watchlist → History | Audit nghiệp vụ | Outbox/Kafka; đọc history qua API | Có thể đến trễ, không xác nhận đồng bộ tức thời |
-| Core / OCR/eKYC → File Service | Upload/download tài liệu | REST và URL có thời hạn | Private media, quyền theo resource |
+| Core → File Service | Upload/download tài liệu | REST và URL có thời hạn | Private media, quyền theo resource |
 | Analytics → Notification | Nhắc chu kỳ/kết thúc | Dispatch ngoài transaction | INT-03: notification ID, receipt và delivery status |
 
 ## 6.2 API nền tảng Cobroker
@@ -389,26 +382,20 @@ Base `C=/internal/v1/cobrokers/onboarding`, `A=/internal/v1/agencies`, `R=/inter
 
 Các biến thể `requestId` trên endpoint nhân sự/chi nhánh thao tác snapshot yêu cầu cập nhật, khác cập nhật live. Params/body của từng chế độ được đặc tả riêng trong L3-API; validator phân biệt snapshot và live trước khi ghi dữ liệu.
 
-## 6.3 OCR/eKYC FPT — contract hiện hành
+## 6.3 Hợp đồng tích hợp xác minh danh tính
 
-| Method | Path tại OCR/eKYC | Request / kết quả |
+Cobroker sử dụng OCR/eKYC như một dịch vụ bên ngoài. Hợp đồng dưới đây quy định dữ liệu và kết quả mà Cobroker cần để xử lý hồ sơ.
+
+| Thao tác từ Cobroker | Dữ liệu trao đổi | Trách nhiệm của Cobroker |
 | --- | --- | --- |
-| POST | `/v1/media/prepare-upload` | Chuẩn bị media refs/URL upload theo contract |
-| POST | `/v1/ocrs` | Header Idempotency-Key; media refs CCCD trước/sau và phụ lục; trả accepted |
-| GET | `/v1/ocrs/{id}` | Request, outcome/error, normalized result và media theo quyền |
-| POST | `/v1/ekyc-sdk/init_session` | Khởi tạo phiên; Core khởi tạo bằng request không có body |
-| POST | `/v1/ekyc-sdk/ocr` | Multipart `files`; giữ contract SDK |
-| POST | `/v1/ekyc-sdk/face/liveness` | Multipart `selfies` hoặc `video` theo contract |
-| POST | `/v1/ekyc-sdk/check_chip` | Dữ liệu NFC theo contract SDK |
-| GET | `/v1/ekyc-sdk/by-session/{sessionId}` | Core lấy kết quả/evidence eKYC |
-| POST | `/v1/media/{mediaId}/prepare-download` | Chuẩn bị download theo resource và quyền |
-| DELETE | `/v1/media` | Chọn request/session/roles cần xóa theo contract |
+| Khởi tạo yêu cầu xác minh | Tham chiếu hồ sơ, tài khoản và tài liệu theo contract | Kiểm quyền, tính đầy đủ đầu vào; lưu liên kết giữa hồ sơ và mã yêu cầu/phiên trả về |
+| Tra cứu kết quả | Mã yêu cầu/phiên đã liên kết | Nhận trạng thái, kết quả định danh và lỗi; kiểm kết quả thuộc đúng hồ sơ |
+| Đối chiếu thông tin | Dữ liệu định danh trả về và thông tin khai báo | Kiểm sai lệch, cập nhật kết quả đối soát và xác định hồ sơ đủ điều kiện hoặc cần xử lý tiếp |
+| Xem tài liệu phục vụ duyệt | Tham chiếu tài liệu được cấp quyền | Kiểm quyền reviewer trên hồ sơ trước cấp quyền xem |
 
-Core `VhmOcrEKycClient` dùng referenceId làm Idempotency-Key cho OCR. Cùng source/key/fingerprint trả request cũ; cùng key khác fingerprint phải từ chối. Luồng tải media dùng `POST /v1/media/{mediaId}/prepare-download` hoặc media URL trong result được cấp quyền. REL-01 quản lý thay thế call site media legacy trong Core.
+Mã yêu cầu/phiên phải được lưu cùng hồ sơ để phục vụ truy vấn và đối soát. Kết quả hoàn tất kỹ thuật không tự thay thế quyết định chấp thuận hồ sơ. Core xử lý bốn tình huống: đang xử lý, có kết quả hợp lệ, có sai lệch và lỗi dịch vụ.
 
-eKYC SDK phải giữ payload/status/header trong allowlist; credential FPT do service inject. Không wrap tùy ý SDK raw response bằng JSON nghiệp vụ Core. Khi timeout mutation, đối soát trạng thái trước quyết định gọi lại; không coi timeout là provider chưa xử lý.
-
-Credential FPT, provider audit và media lifecycle thuộc service OCR/eKYC. Chi tiết thuật toán và giao thức provider tham chiếu [TTD OCR/eKYC](https://vin3s.atlassian.net/wiki/spaces/VARW/pages/3014268156).
+Khi timeout hoặc mất kết nối, Core giữ hồ sơ và tham chiếu yêu cầu để tra cứu lại; không tự đánh dấu xác minh đạt hoặc tạo yêu cầu trùng. Schema API chi tiết được thống nhất trong L3-IDV. Cơ sở dữ liệu, hàng đợi, thuật toán, nhà cung cấp và cơ chế vận hành nội bộ của OCR/eKYC không thuộc thiết kế Cobroker.
 
 ## 6.4 API xếp hạng Sale
 
@@ -443,7 +430,7 @@ Client chọn quý từ danh mục API trả về. Kỳ ngoài phạm vi hoặc 
 
 - Profile nhập ban đầu qua Thrift và cập nhật sự kiện; Pipeline nhập/cập nhật dữ kiện giao dịch. Timestamp/version nguồn dùng chống ghi lùi.
 - Actor ranking qua `X-VHMAgent-UserId` và `X-VHMAgent-Role`, chỉ từ S2S caller được tin cậy.
-- Lỗi validation ranking dùng nhóm `19400`; thiếu quyền `19403`; tài nguyên ngoài scope không trả dữ liệu. HTTP status và business code được quy định đồng thời trong error schema L3-API.
+- Lỗi validation ranking dùng nhóm `19400`; thiếu quyền `19403`; tài nguyên ngoài scope không trả dữ liệu. HTTP status và mã nghiệp vụ được quy định đồng thời trong error schema L3-API.
 - Thay enum, scale tiền, quy tắc hạng hoặc mặc định kỳ là thay đổi contract cần test BFF và báo cáo cũ.
 
 ### 6.4.3 Badge và chứng nhận cá nhân
@@ -488,7 +475,7 @@ Caller nội bộ truyền actor context sau xác thực. Quyền PII được k
 
 ### 6.5.1 INT-01 — Sale activity facts
 
-Watchlist tiêu thụ `GET /internal/v1/sale-activity-facts?cursor&size` từ Analytics. Hợp đồng tích hợp được quản lý tại L3-INT và delivery register INT-01.
+Watchlist tiêu thụ `GET /internal/v1/sale-activity-facts?cursor&size` từ Analytics. Hợp đồng tích hợp được quản lý tại L3-INT và yêu cầu nghiệm thu INT-01.
 
 | Nhóm trường | Contract dữ liệu |
 | --- | --- |
@@ -521,11 +508,11 @@ Config request gồm `effectiveDate, audience, applyMode, officialMonths, offici
 
 ### 6.6.2 Nguồn dữ liệu và phụ thuộc bên ngoài
 
-Profile đồng bộ nhân sự và ngày bắt đầu bán vào users; Pipeline đồng bộ giao dịch vào transactions. Ngày bắt đầu bán được truyền theo source version, lưu tại users.sales_start_date và kích hoạt tính lại khi thay đổi. INT-02 quản lý mapping và backfill của contract này.
+Profile đồng bộ nhân sự và ngày bắt đầu bán vào users; Pipeline đồng bộ giao dịch vào transactions. Ngày bắt đầu bán được truyền theo phiên bản dữ liệu nguồn, lưu tại users.sales_start_date và kích hoạt tính lại khi thay đổi. INT-02 quản lý mapping và backfill của contract này.
 
 Sự kiện thay đổi user/transaction/config kích hoạt tính lại; khi chuyển PIC hoặc ngày giao dịch phải tính cả Sale cũ và mới theo thông tin trước/sau. Phiên bản nguồn cũ và message lặp không được làm dữ liệu quay lùi.
 
-INT-03 đặc tả dispatch Web/App với notification ID ổn định, người nhận, template, kỳ và receipt kênh. Chỉ ghi SENT sau xác nhận từ kênh; LOGGED là kết quả của adapter ghi log. Consumer Quỹ căn đọc classification, calculation status và roomExcluded; BLOCKED/null phải được xử lý riêng với đủ hoặc không đủ điều kiện.
+INT-03 đặc tả dispatch Web/App với notification ID ổn định, người nhận, template, kỳ và receipt kênh. Chỉ ghi SENT sau xác nhận từ kênh. Consumer Quỹ căn đọc classification, calculation status và roomExcluded; BLOCKED/null phải được xử lý riêng với đủ hoặc không đủ điều kiện.
 
 ### 6.6.3 Contract lỗi và version
 
@@ -568,7 +555,7 @@ Prefix `...` kế thừa resource đầy đủ tương ứng trong bảng. Regio
 
 ## 6.8 Error Contract & Versioning
 
-JSON nghiệp vụ theo response wrapper của từng service; file XLSX và SDK raw response là ngoại lệ có contract riêng. Không đổi HTTP status chỉ từ business code. Xung đột version phải yêu cầu đọc lại/preview lại; lỗi ngoài scope không trả dữ liệu nhạy cảm. Watchlist optimistic conflict có business code 21004/HTTP 409 theo implementation.
+JSON nghiệp vụ theo response wrapper của từng service; file XLSX có contract tải riêng. Không đổi HTTP status chỉ từ mã nghiệp vụ. Xung đột version phải yêu cầu đọc lại/preview lại; lỗi ngoài scope không trả dữ liệu nhạy cảm. Watchlist optimistic conflict có mã nghiệp vụ 21004/HTTP 409 theo hợp đồng lỗi.
 
 Breaking change gồm đổi eligibility, scale tiền, enum hạng/trạng thái, ý nghĩa nullable, ngày hiệu lực, scope hoặc event contract. Mỗi thay đổi phải có consumer contract tests, kế hoạch rollout và backfill/reconcile. OpenAPI/DTO là artefact L3 cho kiểu trường/validation; các bảng L2 này không thay schema machine-readable.
 
@@ -581,7 +568,7 @@ Breaking change gồm đổi eligibility, scale tiền, enum hạng/trạng thá
 | `agency_profiles` | Hồ sơ, trạng thái, hạng, organization và Miền |
 | `cobroker_profiles`, `agency_cobroker` | Hồ sơ Sale và quan hệ Sale–đại lý |
 | `agency_branch` | Chi nhánh đại lý |
-| Pháp nhân / yêu cầu cập nhật | MST/pháp nhân, snapshot yêu cầu, người nhận, phản hồi và trạng thái duyệt theo entity hiện hữu |
+| Pháp nhân / yêu cầu cập nhật | MST/pháp nhân, snapshot yêu cầu, người nhận, phản hồi và trạng thái duyệt theo mô hình hồ sơ và yêu cầu cập nhật |
 | `regions`, `region_teams` | Vùng Agent và liên kết ID CMS duy nhất |
 | `region_projects` | Vùng–dự án, giai đoạn, quyết định, ngày hiệu lực |
 | `agency_regions` | Đại lý–vùng chủ quản có lịch sử hiệu lực |
@@ -607,7 +594,7 @@ ERD mô tả các aggregate và quan hệ nghiệp vụ. LEGAL_ENTITIES biểu d
 
 ### 7.1.1 Ràng buộc thời gian và concurrency
 
-Khoảng hiệu lực inclusive: hai khoảng chồng nhau khi start1 ≤ end2 và start2 ≤ end1; null end là vô hạn. Chủ quản đóng D−1 trước khi mở tại D. Các mapping dùng khóa bản ghi cha rồi kiểm overlap trong service/repository. Các mapping sử dụng B-tree index kết hợp khóa cha và overlap query trong migrations 0087/0088/0090. Mọi mutation quan hệ phải đi qua service để duy trì invariant thời gian.
+Khoảng hiệu lực inclusive: hai khoảng chồng nhau khi start1 ≤ end2 và start2 ≤ end1; null end là vô hạn. Chủ quản đóng D−1 trước khi mở tại D. Các mapping dùng khóa bản ghi cha rồi kiểm overlap tại lớp nghiệp vụ. Thiết kế sử dụng B-tree index kết hợp khóa cha và overlap query. Mọi mutation quan hệ phải đi qua service để duy trì invariant thời gian.
 
 Liên minh khóa agency theo thứ tự ID để giảm deadlock. Import hạng sử dụng snapshot version và optimistic lock; hết hạn preview hoặc version thay đổi yêu cầu preview lại. Transaction commit toàn bộ danh sách hoặc rollback toàn bộ.
 
@@ -696,10 +683,10 @@ Thông tin liên hệ/định danh chỉ phục vụ người có quyền báo c
 
 | Dữ liệu | Nguồn chuẩn → bản sao/đích | Kiểm soát |
 | --- | --- | --- |
-| Nhân sự, role, đơn vị | Profile → Core/Analytics/Watchlist theo contract | Source version, đối soát thiếu user; không sửa projection như nguồn chuẩn |
+| Nhân sự, role, đơn vị | Profile → Core/Analytics/Watchlist theo contract | Phiên bản dữ liệu nguồn, đối soát thiếu user; không sửa projection như nguồn chuẩn |
 | Giao dịch | Pipeline → Analytics → facts cho các nghiệp vụ | Ngày cọc khác ngày hợp đồng; eligibility riêng; correction/replay |
 | Chủ quản/vùng bán | Core mapping và scope dự án → API tiêu thụ | Theo ngày hiệu lực, không suy ngược chủ quản từ dự án |
-| Định danh/media | Người dùng → File/OCR/eKYC → kết quả Core | Private refs, source/resource authorization, URL ngắn hạn |
+| Dữ liệu xác minh hồ sơ | OCR/eKYC → Core | Gắn đúng hồ sơ/yêu cầu; kiểm quyền truy cập và đối soát thông tin khai báo |
 | Cấm/hạn chế | Watchlist → Profile/caller check/market | Outbox lag, tập kiểm soát hiện hành, công khai đúng trạng thái |
 | Chu kỳ/hạn mức | Analytics result → consumer | BLOCKED/null không được chuyển thành đủ điều kiện |
 
@@ -710,7 +697,7 @@ CCCD, điện thoại, email, giấy tờ, selfie/video và nội dung vi phạm
 | Nhóm dữ liệu | Chủ sở hữu | Quy tắc quản lý |
 | --- | --- | --- |
 | Hồ sơ, CCCD, liên hệ, hợp đồng | Core/Data Owner | Giới hạn mục đích, quyền truy cập và thời hạn lưu theo loại hồ sơ |
-| Media và kết quả OCR/eKYC | OCR/eKYC/Data Owner | Private storage; mã hóa result/audit; xóa theo request/session và chính sách dữ liệu |
+| Tham chiếu tài liệu và kết quả đối soát hồ sơ | Core/Data Owner | Lưu dữ liệu tối thiểu phục vụ duyệt; quyền xem theo hồ sơ và retention của Cobroker |
 | Facts/projection và kết quả ranking/cycle | Analytics/Data Owner | Giữ dữ liệu đủ cho đối soát và tái dựng; purge theo kỳ và quan hệ phụ thuộc |
 | Sale control và lịch sử quyết định | Watchlist/Data Owner | Bảo toàn lịch sử áp dụng/gỡ; công khai tuân theo status và quyền |
 | Quan hệ vùng/đại lý/pháp nhân | Core/Data Owner | Lưu lịch sử hiệu lực phục vụ kiểm toán; thay đổi bằng nghiệp vụ có audit |
@@ -724,7 +711,7 @@ SEC-01 quản lý lịch retention, legal hold, quyền xóa và kiểm soát m�
 
 | ID | Luồng | Điểm commit / kết quả |
 | --- | --- | --- |
-| CB-01 | OCR/eKYC và onboarding | Kết quả đối soát → hồ sơ nộp/duyệt theo nghiệp vụ |
+| CB-01 | Xác minh danh tính và phê duyệt hồ sơ Sale | Kết quả đối soát → hồ sơ nộp/duyệt theo nghiệp vụ |
 | CB-02 | Yêu cầu cập nhật hồ sơ | Snapshot → duyệt → hồ sơ live; terminal không sửa tiếp |
 | RANK-01 | Tổng hợp/tính hạng quý | Run/batch hoàn tất, công bố results |
 | WL-01 | Tạo/gỡ/công khai | Sale control + outbox; side effect theo dõi riêng |
@@ -733,57 +720,78 @@ SEC-01 quản lý lịch retention, legal hold, quyền xóa và kiểm soát m�
 | REGION-01 | Gán/chuyển quan hệ | Hiệu lực, overlap, lịch sử trong transaction |
 | REGION-02 | Import hạng đại lý | Preview → kiểm version → commit toàn bộ |
 
-## 8.2 OCR/eKYC và phê duyệt hồ sơ
+## 8.2 Xác minh danh tính và phê duyệt hồ sơ Sale
+
+### 8.2.1 Tiếp nhận và xác minh hồ sơ
+
+Sale hoặc người thao tác được cấp quyền khai báo thông tin, cung cấp tài liệu và gửi yêu cầu xác minh. Core kiểm quyền trên tài khoản/hồ sơ, các trường bắt buộc và điều kiện nghiệp vụ trước khi gọi dịch vụ OCR/eKYC.
 
 ```mermaid
 sequenceDiagram
-    participant U as Web/App
-    participant B as BFF/Core
-    participant E as OCR eKYC
-    participant Q as Outbox/Kafka/Worker
-    participant F as FPT
-    participant FS as File Service
-    U->>B: Chuẩn bị upload và nộp media refs
-    B->>E: POST media/prepare-upload
-    E-->>B: Media refs / upload contract
-    B-->>U: Thông tin upload
-    U->>FS: Upload theo contract
-    U->>B: Tạo OCR hồ sơ
-    B->>E: POST ocrs + Idempotency-Key
-    E->>Q: Lưu request/outbox, enqueue
-    E-->>B: Accepted + OCR ID
-    Q->>F: Submit OCR
-    F-->>Q: Pending / kết quả
-    Q->>Q: Schedule poll, không giữ transaction chờ
-    U->>B: Tra trạng thái
-    B->>E: GET ocrs/{id}
-    E-->>B: Status, outcome, result
-    B->>B: Đối soát dữ liệu và điều kiện hồ sơ
-    B-->>U: Kết quả nghiệp vụ / yêu cầu bổ sung
+    participant U as Sale / Người được cấp quyền
+    participant B as BFF
+    participant C as Cobroker Core
+    participant D as Dữ liệu hồ sơ
+    participant E as Dịch vụ OCR/eKYC
+    U->>B: Gửi thông tin và tài liệu hồ sơ
+    B->>C: Yêu cầu xác minh theo actor
+    C->>D: Kiểm quyền, hồ sơ và điều kiện đầu vào
+    C->>E: Gửi yêu cầu xác minh
+    E-->>C: Mã yêu cầu / phiên
+    C->>D: Liên kết yêu cầu với hồ sơ
+    C->>E: Lấy kết quả theo mã đã liên kết
+    E-->>C: Trạng thái và dữ liệu xác minh
+    C->>C: Đối chiếu với thông tin hồ sơ
+    alt Đủ kết quả và thông tin phù hợp
+        C->>D: Lưu kết quả đối soát
+        C-->>B: Hồ sơ đáp ứng bước xác minh
+    else Thiếu kết quả, sai lệch hoặc lỗi
+        C->>D: Lưu tình trạng và lý do
+        C-->>B: Chờ kết quả / bổ sung / xử lý hồ sơ
+    end
+    B-->>U: Hiển thị kết quả nghiệp vụ
 ```
+
+| Kết quả tích hợp | Xử lý hồ sơ tại Cobroker |
+| --- | --- |
+| Đang xử lý | Giữ liên kết yêu cầu; trả trạng thái chờ để người dùng tra cứu lại |
+| Kết quả đầy đủ, thông tin phù hợp | Ghi nhận đối soát; cho phép tiếp tục các bước hồ sơ khi đủ điều kiện |
+| Sai lệch thông tin hoặc thiếu tài liệu | Lưu lý do; yêu cầu bổ sung hoặc chuyển kiểm tra thủ công theo quyền |
+| Lỗi/timeout dịch vụ | Giữ dữ liệu hồ sơ; đối soát yêu cầu đã gửi trước khi thử lại |
+| Kết quả không thuộc hồ sơ/yêu cầu | Từ chối áp dụng kết quả và ghi nhận sự kiện kiểm soát |
+
+Xác minh đạt là một điều kiện của hồ sơ. Quyết định phê duyệt còn phụ thuộc dữ liệu khai báo, tài liệu bắt buộc, điều kiện nghiệp vụ và quyền người duyệt.
+
+### 8.2.2 Nộp và phê duyệt hồ sơ
 
 ```mermaid
 sequenceDiagram
-    participant S as SDK qua BFF/domain
-    participant E as OCR eKYC
-    participant F as FPT
-    S->>E: init_session
-    E->>F: Thêm credential, gọi một lần
-    F-->>E: Session response
-    E-->>S: Response theo contract SDK
-    S->>E: OCR / liveness / NFC theo phiên
-    E->>F: Forward đồng bộ
-    F-->>E: HTTP status + body
-    E-->>S: Preserve contract, không auto retry
-    S->>E: Core query by-session sau luồng
-    E-->>S: Kết quả/evidence theo quyền
+    participant U as Sale / Người được cấp quyền
+    participant C as Cobroker Core
+    participant D as Dữ liệu hồ sơ
+    participant R as Người xử lý hồ sơ
+    U->>C: Nộp hồ sơ
+    C->>D: Kiểm thông tin, tài liệu và kết quả xác minh
+    C->>D: Ghi nhận hồ sơ nộp xử lý
+    R->>C: Nhận xử lý / phân công
+    C->>D: Kiểm quyền và người phụ trách
+    R->>C: Gửi quyết định và lý do
+    C->>D: Kiểm trạng thái và dữ liệu hồ sơ
+    alt Phê duyệt hợp lệ
+        C->>D: Lưu quyết định và cập nhật hồ sơ
+    else Kiểm tra thủ công hoặc từ chối
+        C->>D: Lưu hướng xử lý và lý do
+    end
+    C-->>R: Kết quả xử lý đã lưu
+    U->>C: Tra cứu hồ sơ
+    C-->>U: Trạng thái và thông tin được phép xem
 ```
 
-eKYC không đi qua Kafka OCR worker. Evidence có thể hoàn tất sau response SDK; Core phải xử lý trạng thái thiếu/chưa có media mà không tự tạo kết quả xác minh thành công.
+Mỗi quyết định phải ghi người thực hiện, thời điểm và lý do theo action. Quyền nhận xử lý, phân công, duyệt, chuyển kiểm tra thủ công và từ chối được kiểm độc lập. Core kiểm lại trạng thái hồ sơ trong transaction trước khi ghi quyết định để tránh hai người xử lý cạnh tranh.
 
-### 8.2.1 Yêu cầu cập nhật hồ sơ
+### 8.2.3 Yêu cầu cập nhật hồ sơ đại lý
 
-ARM tạo yêu cầu và snapshot → ASA chỉnh nháp → gửi duyệt → ARM xem diff và xử lý. Duyệt thành công mới áp dữ liệu hợp lệ lên hồ sơ live; phản hồi mở lại chỉnh sửa; từ chối/hủy/hết hạn kết thúc yêu cầu. Thao tác cạnh tranh với job hết hạn hoặc reviewer khác phải kiểm trạng thái/version trước commit. Email/history ngoài DB không được dùng làm điều kiện xác định hồ sơ đã commit.
+ARM tạo yêu cầu và snapshot → ASA chỉnh nháp → gửi duyệt → ARM xem thay đổi và xử lý. Duyệt thành công mới áp dữ liệu hợp lệ lên hồ sơ có hiệu lực; phản hồi mở lại chỉnh sửa; từ chối/hủy/hết hạn kết thúc yêu cầu. Thao tác cạnh tranh với job hết hạn hoặc reviewer khác phải kiểm trạng thái/version trước khi lưu. Email và lịch sử tích hợp được xử lý sau transaction nghiệp vụ.
 
 ## 8.3 Xếp hạng Sale
 
@@ -819,7 +827,7 @@ BFF xác thực → analytics kiểm actor/role → resolve scope → giao scope
 | Thiếu config cho nhóm | Không gán hạng giả; trả trạng thái/remark và cảnh báo |
 | Giao dịch thiếu tiền/ngày | Gắn lý do loại; đối soát nguồn |
 | Message lặp hoặc batch cũ | Kiểm trạng thái/lease; tránh ghi lặp |
-| Nguồn đến muộn | Reconcile theo chính sách source; quan sát kết quả công bố |
+| Nguồn đến muộn | Reconcile theo chính sách dữ liệu nguồn; quan sát kết quả công bố |
 | Không có scope | Từ chối, không fallback toàn hệ thống |
 | Chứng nhận đang xử lý hoặc render lỗi | Trả trạng thái tương ứng; chỉ cấp URL khi file sẵn sàng và actor có quyền |
 
@@ -858,10 +866,10 @@ Scan: khóa chạy → lấy facts theo cursor → xác định mốc và ngư�
 ```mermaid
 sequenceDiagram
     participant E as Job / data-change
-    participant S as CalculatorService
+    participant S as Điều phối chu kỳ
     participant D as PostgreSQL
-    participant C as Calculator
-    E->>S: recalculate(username)
+    participant C as Bộ tính chu kỳ
+    E->>S: Yêu cầu tính lại chu kỳ của Sale
     S->>D: Khóa user, đọc đầu vào và kết quả
     alt Thiếu đầu vào hoặc đổi audience chưa xử lý
         S->>D: Lưu BLOCKED và lý do
@@ -954,8 +962,8 @@ Upload XLSX → parse/validate A/B/C và độc quyền → lưu preview Redis g
 
 | Tình huống | Hành vi / phục hồi |
 | --- | --- |
-| OCR/eKYC timeout mutation | Không tự submit lại; giữ outcome chưa xác định và đối soát |
-| OCR completed với provider error | Trả outcome/error; không duyệt hồ sơ từ status |
+| Dịch vụ xác minh timeout | Giữ hồ sơ và mã yêu cầu; tra cứu/đối soát trước khi gửi lại |
+| Dịch vụ xác minh trả lỗi hoặc kết quả sai lệch | Lưu lý do, yêu cầu bổ sung hoặc kiểm tra thủ công theo quyền |
 | Profile/history lỗi sau commit Watchlist | Giữ outbox để xử lý; hiển thị/truy vết độ trễ side effect |
 | Thiếu ngày bán/config chu kỳ | BLOCKED có lý do; không coi là không đạt hoặc đủ điều kiện |
 | Scan tỷ lệ bất thường / dry-run | Không phát lệnh khóa hàng loạt |
@@ -968,7 +976,7 @@ Upload XLSX → parse/validate A/B/C và độc quyền → lưu preview Redis g
 
 ## 9.1 Identity & Authentication
 
-BFF xác thực end-user và truyền actor context qua caller nội bộ được tin cậy. Core có gate `hasRole('BFF')` trên các controller liên quan; Analytics dùng security nội bộ và header actor; Watchlist tách Internal/Check/Market. Basic/S2S credential phải dùng trên transport bảo mật, không gửi xuống FE hoặc ghi log.
+BFF xác thực end-user và truyền actor context qua caller nội bộ được tin cậy. Core chỉ nhận yêu cầu nghiệp vụ từ BFF được cấp quyền; Analytics xác thực caller nội bộ và actor; Watchlist tách Internal/Check/Market. Basic/S2S credential phải dùng trên transport bảo mật, không gửi xuống FE hoặc ghi log.
 
 BFF phải bỏ header actor/scope do FE tự gửi rồi dựng context theo principal đã xác thực. Caller được xác thực không đồng nghĩa người dùng cuối có quyền trên mọi resource. Các API vận hành, import confirm, reveal và retry outbox cần quyền riêng.
 
@@ -988,7 +996,7 @@ Quyền được đánh giá theo ba lớp: service principal → quyền chức
 | Import hạng đại lý | ARM roles11/1101 theo contract; preview gắn actor/organization | Confirm kiểm lại quyền và version; mở rộng role theo DEC-06 |
 | Liên minh | Đại lý đứng đầu quản lý; thành viên được xem theo quyền | Kiểm organization, membership và trạng thái trước mutation |
 | Pháp nhân/dự án | Operator và ASA được phân công trên đại lý | Kiểm agencyId/legalId/projectId trong cùng phạm vi |
-| OCR/eKYC/media | Authenticated source và quyền trên request/session/media | Detail, list, raw audit, download và delete cùng tuân resource policy SEC-01 |
+| Kết quả xác minh/tài liệu hồ sơ | Actor có quyền trên hồ sơ và đúng mục đích xem | Kiểm account/hồ sơ/yêu cầu liên kết; kết quả ngoài phạm vi không được trả hoặc áp dụng |
 
 Scope đọc của người có nhiều vai trò là hợp các phạm vi hợp lệ; sau đó giao với bộ lọc yêu cầu. Quyền sửa, công khai, xuất hoặc cấu hình được kiểm riêng từng action. Các mã role trong từng hệ thống được ánh xạ tại L3-SEC; thay mapping phải có compatibility test và audit.
 
@@ -1001,35 +1009,32 @@ Scope đọc của người có nhiều vai trò là hợp các phạm vi hợp 
 | Lộ CCCD/phone qua list/export | Policy masking/reveal/export theo DEC-02; audit actor và phạm vi dữ liệu |
 | File độc hại hoặc quá lớn | Allowlist loại/size, kiểm parser/upload, private storage, kiểm quyền download |
 | Outbox cũ khóa lại tài khoản | Tính lại kiểm soát hiện hành lúc gửi, đối soát trạng thái Profile |
-| Retry provider tạo tác động trùng | Idempotency OCR và không auto retry eKYC mutation |
-| Lộ credential / raw provider response | Secret manager theo môi trường; redaction; hạn chế raw audit |
+| Gửi yêu cầu xác minh trùng | Lưu tham chiếu yêu cầu và đối soát trước khi gửi lại |
+| Lộ thông tin xác thực hoặc dữ liệu hồ sơ qua log | Secret manager theo môi trường, redaction và audit truy cập |
 | Quyền vùng sai sau thay mapping | Scope server-side theo ngày hiệu lực, kiểm cả read/export và thao tác |
 
-Credential được quản lý theo môi trường, cấp quyền tối thiểu và rotation có kiểm soát. Secret, raw media và signed URL bị loại khỏi log/event. Mã hóa result/audit OCR/eKYC thuộc service OCR/eKYC; kiểm soát dữ liệu các domain còn lại theo L3-SEC và SEC-01. Thay đổi consent, retention hoặc quyền truy cập đặc quyền phải qua Security/Data production gate.
+Credential được quản lý theo môi trường, cấp quyền tối thiểu và rotation có kiểm soát. Secret, raw media và signed URL bị loại khỏi log/event. Kiểm soát dữ liệu hồ sơ, ranking, chu kỳ, cấm/hạn chế và quan hệ đại lý theo L3-SEC và SEC-01. Thay đổi consent, retention hoặc quyền truy cập đặc quyền phải qua Security/Data production gate.
 
 # 10. Deployment & Infrastructure Topology
 
 ## 10.1 Environments & Topology
 
-Core, Analytics, Watchlist và OCR/eKYC được triển khai độc lập. Mỗi dịch vụ sở hữu schema, migration, cấu hình và lifecycle phát hành. API/worker sử dụng PostgreSQL, Kafka và Redis theo phụ thuộc domain; ingress/egress được kiểm soát bằng danh sách caller và đích tích hợp. Deployment manifest L3-OPS xác định namespace, image, replica, resource, probe và secret reference cho từng môi trường.
+Core, Analytics và Watchlist được triển khai độc lập. Mỗi dịch vụ sở hữu schema, kế hoạch chuyển đổi dữ liệu, cấu hình và lifecycle phát hành. API/worker sử dụng PostgreSQL, Kafka và Redis theo phụ thuộc domain; ingress/egress được kiểm soát bằng danh sách caller và đích tích hợp. Deployment manifest L3-OPS xác định namespace, image, replica, resource, probe và secret reference cho từng môi trường.
 
 ```mermaid
 flowchart TB
     G["Ingress / API Gateway / BFF"] --> C["Core pods"]
     G --> A["Analytics pods"]
     G --> W["Watchlist pods"]
-    C --> E["OCR/eKYC pods"]
+    C --> E["Dịch vụ OCR/eKYC bên ngoài"]
     C --> DB["PostgreSQL theo ownership"]
     A --> DB
     W --> DB
-    E --> DB
     C --> R["Redis"]
     A --> R
     W --> R
     A --> K["Kafka"]
     W --> K
-    E --> K
-    E --> X["Private File / FPT egress"]
 ```
 
 Sơ đồ biểu diễn topology logic. Việc phân bổ database instance, broker và cache theo môi trường được xác định bằng capacity plan và yêu cầu cô lập dữ liệu tại OPS-01.
@@ -1039,27 +1044,27 @@ Sơ đồ biểu diễn topology logic. Việc phân bổ database instance, bro
 | Nhóm | Cấu hình khởi tạo | Điều kiện rollout |
 | --- | --- | --- |
 | Ranking jobs | SALE_ANALYTICS_JOBS_ENABLED=false; aggregation 02:00 | Kiểm manifest và bật sau import/backfill |
-| Kỳ đầu ranking | SALE_RANKING_START_DATE=2026-10-01 | REL-03: cấu hình kỳ đầu Q3/2026 và backfill dữ liệu phục vụ trọng số |
+| Kỳ đầu ranking | Q3/2026 | REL-03: chuẩn bị dữ liệu kỳ đầu và dữ liệu kỳ trước phục vụ trọng số |
 | Cycle | Job 00:00; notification mỗi 30 giây, batch 100 | Lịch chạy độc lập ranking; INT-02 cung cấp ngày bán và dữ liệu đối soát |
 | Watchlist scanner | Disabled, dry-run=true; 02:00; batch 500; maxRatio 0,05; minSample 1.000 | INT-01 contract test và dry-run report đạt trước bật thực thi |
 | Rank import đại lý | Redis preview 15 phút, 5 MB/1.000 dòng | Kiểm giới hạn gateway và lỗi preview hết hạn |
 | Watchlist import | Staging 24 giờ, 20.000 dòng | DEC-02 xác định giới hạn dòng; cleanup theo thời hạn staging |
-| OCR/eKYC | Credential FPT server-side, contract SDK/OCR riêng | Xác nhận endpoint/media compatibility và timeout theo service |
+| Tích hợp xác minh hồ sơ | Địa chỉ dịch vụ, thông tin xác thực S2S và timeout caller | Kiểm liên kết hồ sơ/yêu cầu và xử lý kết quả theo L3-IDV |
 
 ## 10.3 Migration & Release Strategy
 
 1. Chốt contract và quyết định mở ảnh hưởng dữ liệu/quyền; pin image, schema và configuration cho từng môi trường.
 2. Chạy migration trên bản sao dữ liệu đại diện, kiểm lock/duration/rollback compatibility; không chạy thử destructive migration trên production.
-3. Kiểm migrations Core 0086–0090 cho region, project, owner-region, alliance và legal-project. Migration 0086 sử dụng schema `cobroker_db`; release validation phải kiểm schema đích và quyền migration. Các mapping sử dụng khóa cha/overlap query, không phụ thuộc btree_gist.
+3. Kiểm DDL cho vùng, dự án, quan hệ chủ quản, liên minh và pháp nhân: khóa, index, ràng buộc ngày và quyền chuyển đổi dữ liệu. Kiểm thử đồng thời phải bảo đảm invariant không chồng hiệu lực.
 4. Nhập/đối soát nguồn Profile/Pipeline và quan hệ đại lý/vùng; giữ scanner dry-run, không tạo ngày bán giả để vượt BLOCKED.
 5. Triển khai consumer/BFF theo thứ tự tương thích; chạy smoke API và kiểm quyền âm; backfill ranking trước công bố.
-6. Bật job/side effect sau kiểm dữ liệu và quan sát backlog; nghiệm thu FPT onboarding/duyệt, Profile và history.
+6. Bật job/side effect sau kiểm dữ liệu và quan sát backlog; nghiệm thu đăng ký/xác minh/duyệt hồ sơ, Profile và history.
 
-Rollback image chỉ khi tương thích schema hiện tại. Không xóa results, periods hoặc outbox để xử lý nhanh; side effect đã gửi Profile/FPT không được rollback chỉ bằng restore DB.
+Rollback image chỉ khi tương thích schema hiện tại. Không xóa results, periods hoặc outbox để xử lý nhanh; side effect đã gửi Profile/dịch vụ tích hợp không được rollback chỉ bằng restore DB.
 
 ## 10.4 Network & Infrastructure Security
 
-Ingress chỉ nhận caller được cấp; DB/Redis/Kafka đặt trong mạng riêng. Egress giới hạn theo FPT/File/Profile/History và các tích hợp được đăng ký. Credential tách theo môi trường. L3-OPS quy định NetworkPolicy, TLS, backup/PITR, secret injection, probes và requests/limits; OAT kiểm tra thực thi từng kiểm soát trên cấu hình phát hành.
+Ingress chỉ nhận caller được cấp; DB/Redis/Kafka đặt trong mạng riêng. Egress giới hạn theo OCR-eKYC/File/Profile/History và các tích hợp được đăng ký. Credential tách theo môi trường. L3-OPS quy định NetworkPolicy, TLS, backup/PITR, secret injection, probes và requests/limits; OAT kiểm tra thực thi từng kiểm soát trên cấu hình phát hành.
 
 # 11. Cost & Capacity/Performance
 
@@ -1072,13 +1077,13 @@ Ingress chỉ nhận caller được cấp; DB/Redis/Kafka đặt trong mạng r
 | Chu kỳ | N Sale × số kỳ + facts mỗi Sale | Batch đọc 500, transaction từng Sale; tài khoản lịch sử dài |
 | Watchlist | Số bản ghi/định danh, check rps, scan population, import rows | p95 check, khóa định danh, parser memory, scan duration, outbox lag |
 | Vùng/liên minh | Số mapping ngày, dự án và membership | EXISTS trước phân trang, batch enrich, lock contention |
-| OCR/eKYC | Số tài liệu/phiên, kích thước file, provider latency | Queue lag, thời gian hoàn tất, concurrency và chi phí provider |
+| Xác minh hồ sơ tại Core | Số hồ sơ gửi xác minh, lượt tra cứu kết quả, thời gian chờ | Tỷ lệ đủ điều kiện, sai lệch, lỗi tích hợp và thời gian xử lý hồ sơ |
 
 Capacity test sử dụng dữ liệu nhiều năm và chạy đồng thời query, export/import, job cùng cập nhật hồ sơ trên nhiều pod. Đo riêng tài khoản có timeline dài, thời gian giữ khóa và memory khi xuất file. Batch 500 giới hạn số Sale mỗi lượt đọc; preview 15 phút giới hạn thời gian xác nhận thao tác.
 
 ## 11.2 Cost Model
 
-Chi phí gồm compute API/worker, PostgreSQL data/index/WAL/backup, Redis, Kafka retention, file storage/egress, observability và phí FPT. Chứng nhận ảnh phát sinh storage/render khi US-05/06 được triển khai. Dự toán được tính từ population, peak traffic, retention và đơn giá môi trường trong capacity report OPS-01; báo cáo ghi chi phí cố định, chi phí biến đổi và dự phòng tăng trưởng.
+Chi phí gồm compute API/worker, PostgreSQL data/index/WAL/backup, Redis, Kafka retention, file storage/egress, observability của Core, Analytics và Watchlist. Chứng nhận ảnh phát sinh storage/render khi US-05/06 được triển khai. Dự toán được tính từ population, peak traffic, retention và đơn giá môi trường trong capacity report OPS-01; báo cáo ghi chi phí cố định, chi phí biến đổi và dự phòng tăng trưởng.
 
 Capacity report bao gồm N/T theo tháng, tăng trưởng, kích thước file, tỷ lệ retry, lịch sử lưu giữ, cửa sổ batch, peak traffic và ngân sách SRE/FinOps. Kết quả đo là căn cứ chọn replica, partition, DB pool và giới hạn job đồng thời.
 
@@ -1086,7 +1091,7 @@ Capacity report bao gồm N/T theo tháng, tăng trưởng, kích thước file,
 
 ## 12.1 Scaling Strategy
 
-Scale API theo tải request; worker theo partition, provider quota và khả năng DB. Phân trang/query lọc trước khi tải dữ liệu; tránh N+1 trong enrich vùng/đại lý. Tăng số pod không thay thế kiểm soát khóa/idempotency hoặc tự làm job chạy nhanh hơn.
+Scale API theo tải request; worker theo partition, giới hạn tích hợp và khả năng DB. Phân trang/query lọc trước khi tải dữ liệu; tránh N+1 trong enrich vùng/đại lý. Tăng số pod không thay thế kiểm soát khóa/idempotency hoặc tự làm job chạy nhanh hơn.
 
 Ranking dùng Redis/ShedLock kết hợp run/batch DB; cycle dùng background job lease/checkpoint và khóa user; Watchlist scanner dùng Redisson và scan_run. Lease hết hoặc nhận lặp phải kiểm state/version ở DB trước tạo side effect.
 
@@ -1100,12 +1105,12 @@ Ranking dùng Redis/ShedLock kết hợp run/batch DB; cycle dùng background jo
 | Notification gửi rồi ghi trạng thái lỗi | UNKNOWN để đối soát receipt; chỉ retry với notification ID và cơ chế dedup của kênh |
 | Scan facts thiếu/sai | Không dùng dữ liệu thiếu để khóa hàng loạt; dry-run/ratio guard không thay chất lượng facts |
 | Redis mất preview | Import hạng yêu cầu preview lại; không confirm từ dữ liệu client tự gửi |
-| FPT timeout mutation | Không auto retry; theo runbook OCR/eKYC về UNKNOWN/reconcile |
+| Dịch vụ xác minh không khả dụng | Bảo toàn hồ sơ và mã yêu cầu; đối soát kết quả khi kết nối được khôi phục |
 | Concurrent transfer/membership | Khóa cha/thứ tự khóa, kiểm overlap và version; không bypass bằng SQL |
 
 ## 12.3 Backup & Restore
 
-Backup/PITR phải bao gồm facts/config/results/periods/notifications và outbox tương ứng. Sau restore cần đối soát những event đã phát hoặc side effect đã tới Profile/FPT; tránh phát lại mù toàn bộ. File/media backup và DB reference phải đồng bộ về khả năng truy cập. RTO, RPO và retention backup được đăng ký theo lớp dịch vụ tại OPS-01; biên bản diễn tập ghi thời gian khôi phục thực tế, điểm dữ liệu phục hồi và kết quả đối soát.
+Backup/PITR phải bao gồm facts/config/results/periods/notifications và outbox tương ứng. Sau restore cần đối soát những event đã phát hoặc side effect đã tới Profile/dịch vụ tích hợp; tránh phát lại mù toàn bộ. File/media backup và DB reference phải đồng bộ về khả năng truy cập. RTO, RPO và retention backup được đăng ký theo lớp dịch vụ tại OPS-01; biên bản diễn tập ghi thời gian khôi phục thực tế, điểm dữ liệu phục hồi và kết quả đối soát.
 
 # 13. Observability & Monitoring
 
@@ -1118,7 +1123,7 @@ Backup/PITR phải bao gồm facts/config/results/periods/notifications và outb
 | Chu kỳ | COMPLETED/PENDING/BLOCKED theo reason, stale, lease/checkpoint, notification status | Audience, job type, reason và delivery outcome |
 | Watchlist | Outbox oldest/failed, Profile sync lag, scan candidates/ratio/abort, import failures | Channel, scan type, dry-run, outcome |
 | Core vùng | Overlap/version conflict, history lag, preview expired, CMS unavailable | Action và loại quan hệ |
-| OCR/eKYC | Queue age, provider latency/error/UNKNOWN, processing timeout, evidence pending/dead | Operation, provider outcome, media lifecycle |
+| Xác minh hồ sơ | Số hồ sơ chờ kết quả, sai lệch, lỗi/timeout tích hợp và tuổi hồ sơ | Loại yêu cầu và kết quả xử lý tại Core |
 
 Application log liên kết request/job/outbox bằng correlation ID và domain ID. Metric không dùng username, CCCD, session ID hoặc giá trị có cardinality không giới hạn. Dashboard phải cho phép đi từ cảnh báo tới log/trace và runbook tương ứng.
 
@@ -1126,19 +1131,19 @@ Application log liên kết request/job/outbox bằng correlation ID và domain 
 
 | Điều kiện | Tác động | Xử lý |
 | --- | --- | --- |
-| Dữ liệu ranking ngày trước không hoàn tất vào mốc kiểm soát 04:00 | Bảng số liệu bị trễ | Kiểm source watermark, run/batch và outbox |
+| Dữ liệu ranking ngày trước không hoàn tất vào mốc kiểm soát 04:00 | Bảng số liệu bị trễ | Kiểm mốc đồng bộ dữ liệu nguồn, run/batch và outbox |
 | Batch ranking chờ quá 1 giờ | Pipeline tổng hợp tắc | Kiểm lease, worker, DB và sweeper |
-| BLOCKED/stale tăng vượt baseline vận hành | Ngày bán/config/facts không hợp lệ | Phân nhóm reason và đối soát producer |
+| BLOCKED/stale tăng vượt ngưỡng vận hành | Ngày bán/config/facts không hợp lệ | Phân nhóm reason và đối soát producer |
 | Scan abort hoặc tỷ lệ ứng viên vượt guard | Nguy cơ khóa sai diện rộng | Giữ dry-run, kiểm mẫu số/mốc ngày/eligibility |
 | Profile/history outbox lỗi hoặc backlog tăng | Side effect chậm hơn quyết định nghiệp vụ | Kiểm dependency và retry theo channel |
 | Notification UNKNOWN | Outcome delivery không xác định | Đối soát receipt trước retry |
-| Provider timeout hoặc evidence dead | Onboarding bị gián đoạn | Áp runbook OCR/eKYC và correlation theo phiên |
+| Dịch vụ xác minh timeout hoặc thiếu kết quả | Hồ sơ không hoàn tất bước xác minh | Kiểm mã yêu cầu liên kết và phối hợp đầu mối dịch vụ theo contract |
 
 Ngưỡng theo môi trường, thời gian duy trì cảnh báo, mức độ và người trực được quản lý tại L3-OPS. Mỗi cảnh báo phải có owner và đường dẫn runbook trước go-live.
 
 ## 13.3 SLI/SLO
 
-SLI đo riêng API availability, data freshness, job completion, side-effect delivery và notification delivery. LOGGED được loại khỏi số lượng thông báo gửi thành công. OCR COMPLETED được tách theo outcome; tỷ lệ xác minh danh tính đạt là chỉ số nghiệp vụ riêng.
+SLI đo riêng API availability, data freshness, job completion, side-effect delivery và notification delivery. Thông báo gửi thành công phải có xác nhận từ kênh. Đo riêng tỷ lệ hồ sơ hoàn tất xác minh, tỷ lệ sai lệch và tỷ lệ được phê duyệt.
 
 OPS-01 xác định cửa sổ đo, target và error budget cho từng SLI dựa trên capacity test và yêu cầu vận hành. Dashboard sử dụng cùng định nghĩa với báo cáo nghiệm thu.
 
@@ -1148,7 +1153,7 @@ OPS-01 xác định cửa sổ đo, target và error budget cho từng SLI dựa
 
 | Sự cố / thao tác | Bước chẩn đoán và phục hồi | Owner |
 | --- | --- | --- |
-| Onboarding thiếu kết quả/media | Kiểm Core referenceId/session, OCR outcome, evidence pending và quyền; không tự gọi lại mutation | Core + OCR/eKYC |
+| Hồ sơ thiếu kết quả xác minh/tài liệu | Kiểm mã hồ sơ, tham chiếu yêu cầu, dữ liệu trả về và quyền truy cập; đối soát trước khi gửi lại | Core/Integration |
 | Yêu cầu cập nhật kẹt | Kiểm state, assignee, hạn, version và snapshot/live; xử lý qua nghiệp vụ | Core |
 | Ranking lệch doanh số | Đối soát eligibility, tiền/scale, contractDate, run/bucket/reconcile; chỉ backfill có phạm vi | Analytics |
 | Chu kỳ BLOCKED/stale | Kiểm ngày bán/audience/config/facts/version; tính lại sau sửa nguồn | Analytics + Profile |
@@ -1161,7 +1166,7 @@ OPS-01 xác định cửa sổ đo, target và error budget cho từng SLI dựa
 
 ## 14.2 Readiness Checklist
 
-- Có owner, release ticket, image/commit và cấu hình của từng service.
+- Có owner, release ticket, phiên bản phát hành và cấu hình của từng service.
 - Các quyết định nghiệp vụ/quyền tại mục 16 có người chịu trách nhiệm và trạng thái.
 - Contract facts, ngày bán, notification, scope vùng được nghiệm thu trước bật tính năng phụ thuộc.
 - Migration/backfill/preview được kiểm trên dữ liệu đại diện; có kế hoạch xử lý dữ liệu cũ thiếu vùng/Miền.
@@ -1177,12 +1182,12 @@ Go-live record ghi kết quả từng tiêu chí, reviewer và evidence của m�
 
 | Phạm vi | Ca kiểm thử bắt buộc |
 | --- | --- |
-| Onboarding/FPT | Upload thiếu/sai media; OCR accepted/poll; completed error; key trùng giống/khác fingerprint; SDK timeout không retry; source/session ngoài quyền; evidence đến muộn |
+| Đăng ký/xác minh/duyệt hồ sơ | Thiếu thông tin/tài liệu; kết quả đúng/sai hồ sơ; sai lệch định danh; timeout; nộp khi thiếu điều kiện; reviewer ngoài quyền; hai quyết định đồng thời |
 | Hồ sơ cập nhật | Nháp không sửa live; approve/feedback/reject/cancel/expiry; reviewer cạnh tranh; không đổi hạng/trạng thái gián tiếp |
 | Ranking tiền/eligibility | contractDate vs depositDate; hủy vẫn tính ranking; thiếu VAT/KPBT; precision/overflow; so điểm không làm tròn |
 | Ranking tier | Đúng minScore, quota, hòa điểm ranh giới, dồn hạng, config thiếu; Q4→Q1, Q3/2026, quý hiện tại |
 | Ranking API | Tối đa 4 quý, export cắt có thông báo, role21, scope rỗng, agency scope giả, detail ngoài quyền |
-| Badge/chứng nhận | Đổi quý, không có hạng, tên có dấu/dài, File Service lỗi, tải ảnh cá nhân; chỉ chạy khi có implementation |
+| Badge/chứng nhận | Đổi quý, không có hạng, tên có dấu/dài, File Service lỗi, tải ảnh cá nhân |
 | Watchlist | Định danh chuẩn hóa/trùng; bổ sung/reapply; create/release cùng lúc; account subset; trạng thái công khai; reveal/export quyền âm |
 | Watchlist outbox | Release trước sender; nhiều controls cùng tài khoản; retry/Profile lỗi; không tự bật lại do gỡ cấm |
 | Watchlist import/scan | File sai/oversize, dòng lỗi/trùng, confirm lặp, hết hạn; dry-run, ratio, grace, ngày cuối tháng, nguồn facts thiếu |
@@ -1208,7 +1213,7 @@ Test specification được tổ chức theo calculator, API, persistence, contr
 | Integration/UAT | Hoàn tất INT-01…INT-05 và các quyết định DEC ảnh hưởng nghiệp vụ; kết quả nguồn/đích được đối soát |
 | Performance/OAT | Workload mục 11 đạt NFR; migration, retry, backup/restore và alert được diễn tập |
 
-Test report ghi commit/image, cấu hình, dữ liệu, môi trường, thời điểm và kết quả thực thi. Lỗi còn tồn tại phải có mức độ, tác động và quyết định release; report được gắn vào workflow nghiệm thu của phiên bản phát hành.
+Test report ghi phiên bản phát hành, cấu hình, dữ liệu, môi trường, thời điểm và kết quả thực thi. Lỗi còn tồn tại phải có mức độ, tác động và quyết định release; report được gắn vào workflow nghiệm thu của phiên bản phát hành.
 
 ## 15.3 Test Data & Acceptance
 
@@ -1223,45 +1228,45 @@ Dùng dữ liệu giả, không đưa CCCD/ảnh/video/credential/signed URL th�
 | RISK-01 | Scope tổ chức và scope vùng không đồng nhất | Lộ dữ liệu hoặc thao tác sai đại lý/vùng | Action + resource policy; hợp scope đọc, giao bộ lọc; test quyền âm INT-05 | Core/BFF/Security |
 | RISK-02 | Facts thiếu, trễ hoặc thay đổi sau quét | Phân loại/khóa tài khoản sai | Version/watermark; đối soát population; dry-run và ratio guard | Analytics/Watchlist |
 | RISK-03 | Side effect chậm hơn transaction nghiệp vụ | Profile/history khác trạng thái domain | Outbox delivery status, dashboard lag và runbook reconcile | Backend/Integration |
-| RISK-04 | Retry mutation sau timeout | Tạo tác động trùng tại provider hoặc kênh thông báo | OCR idempotency; không auto retry eKYC; UNKNOWN và receipt reconciliation | OCR/Notification |
+| RISK-04 | Phát lại yêu cầu tích hợp sau timeout | Trùng yêu cầu xác minh hoặc thông báo | Liên kết yêu cầu với hồ sơ, dedup và đối soát receipt trước retry | Core/Analytics/Integration |
 | RISK-05 | Cập nhật quan hệ đồng thời hoặc bypass writer | Overlap chủ quản/dự án, trùng membership | Khóa cha theo thứ tự, version, overlap query; giới hạn quyền DB | Core/DBA |
 | RISK-06 | Restore DB sau khi side effect đã thực thi | Phát lại lệnh, sai trạng thái bên ngoài | Đối soát source/event/outbox/receipt trước mở lại xử lý | SRE/DBA/Integration |
 
 Risk acceptance phải ghi owner, phạm vi ảnh hưởng, biện pháp bù, ngày hết hạn và điều kiện thu hồi. Rủi ro dữ liệu/quyền được thẩm định tại Security/Data production gate.
 
-## 16.2 Integration & Release Register
+## 16.2 Integration & Release Requirements
 
-Bảng này quản lý công việc chuyển thiết kế thành phiên bản triển khai. Mỗi hạng mục có đầu ra kỹ thuật và điều kiện đóng; trạng thái delivery không thay đổi contract mục tiêu ở các mục trên.
+Các phụ thuộc dưới đây là điều kiện để nghiệm thu thiết kế tích hợp và đưa nghiệp vụ vào vận hành. Mỗi hạng mục quy định contract, trách nhiệm và kết quả phải đạt.
 
-| ID | Hạng mục / hiện trạng triển khai | Đầu ra và điều kiện đóng | Chủ sở hữu / gate |
+| ID | Phạm vi thiết kế | Tiêu chí nghiệm thu | Chủ sở hữu / gate |
 | --- | --- | --- | --- |
-| INT-01 | Sale activity facts: Watchlist có client; Analytics phải bổ sung producer endpoint | OpenAPI cursor/watermark/version và eligibility; replay/page-error tests; đối soát dry-run trước bật scanner | Analytics/Watchlist — Integration |
-| INT-02 | Ngày bắt đầu bán: users có cột sales_start_date; UserSyncData thiếu mapping | Bổ sung contract Profile, source version, backfill và tính lại; nghiệm thu thay đổi ngày/late event | Profile/Analytics — Integration/UAT |
-| INT-03 | Thông báo chu kỳ: adapter hiện trả LOGGED | Adapter Web/App, notification ID, receipt/dedup; nghiệm thu timeout/crash-after-send; quy tắc chuyển lịch LOGGED | Analytics/Notification — Integration/UAT |
+| INT-01 | Hợp đồng dữ liệu hoạt động bán giữa Analytics và Watchlist | OpenAPI cursor/watermark/version và eligibility; replay/page-error tests; đối soát dry-run trước bật scanner | Analytics/Watchlist — Integration |
+| INT-02 | Đồng bộ ngày bắt đầu bán từ Profile vào Analytics | Bổ sung contract Profile, phiên bản dữ liệu nguồn, backfill và tính lại; nghiệm thu thay đổi ngày/late event | Profile/Analytics — Integration/UAT |
+| INT-03 | Gửi thông báo chu kỳ trên Web/App | Hợp đồng Web/App, notification ID, receipt/dedup; nghiệm thu timeout và lỗi sau khi kênh đã nhận | Analytics/Notification — Integration/UAT |
 | INT-04 | Badge/chứng nhận: triển khai pipeline US-05/06 | API self-access, template version, resolve/render, private file; test đổi quý, tên tiếng Việt và lỗi render | Analytics/BFF — Integration/UAT |
 | INT-05 | Phạm vi vùng và điểm chặn liên dịch vụ | Mapping CMS/Core/Analytics; action/resource matrix; E2E list/detail/export, revoke session và checks tại từng mutation | Core/BFF/Profile/Security — Security/UAT |
-| REL-01 | Core còn call site media legacy GET /v1/media/{id} | Chuyển sang prepare-download/detail được cấp quyền; test màn quản trị và source isolation | Core/OCR — Integration |
-| REL-02 | Caller tạo đại lý cũ cho thiếu region/area | Backfill, nâng contract caller, xác định cutover và bật validation bắt buộc; đo số hồ sơ còn thiếu | Core/BFF — Migration/UAT |
-| REL-03 | Default ranking start-date là 01/10/2026; SRS bắt đầu Q3/2026 | Cấu hình kỳ đầu theo SRS, backfill dữ liệu trọng số và đối soát trước công bố | Analytics — Migration/UAT |
+| REL-01 | Truy cập tài liệu phục vụ duyệt hồ sơ | Người xử lý chỉ xem tài liệu thuộc hồ sơ được cấp quyền; kiểm URL hết hạn và truy cập ngoài phạm vi | Core/Integration — Security/UAT |
+| REL-02 | Thiết lập vùng chủ quản và Miền cho đại lý | Backfill, nâng contract caller, xác định cutover và bật validation bắt buộc; đo số hồ sơ còn thiếu | Core/BFF — Migration/UAT |
+| REL-03 | Dữ liệu xếp hạng từ Q3/2026 | Cấu hình kỳ đầu theo SRS, backfill dữ liệu trọng số và đối soát trước công bố | Analytics — Migration/UAT |
 | OPS-01 | Capacity, SLO, RTO/RPO và deployment profile | Capacity/cost report, target theo SLI, manifest versioned, dashboard/runbook và restore drill | SRE/DBA — OAT |
-| SEC-01 | Retention, PII và source/resource policy | Retention schedule, encryption/access matrix, purge/hold rules; test list/raw audit/media theo source | Data Owner/Security — Data production |
+| SEC-01 | Retention và quyền truy cập dữ liệu Cobroker | Retention schedule, encryption/access matrix, purge/hold rules; test quyền hồ sơ, tài liệu, báo cáo và export | Data Owner/Security — Data production |
 
 ## 16.3 Business Decision Register
 
-Các quyết định dưới đây ảnh hưởng hành vi sản phẩm hoặc compatibility. Phương án kỹ thuật được trình rõ để BO/BA phê duyệt tại Business gate; implementation phải bám quyết định được ghi nhận.
+Các quyết định dưới đây ảnh hưởng hành vi sản phẩm hoặc compatibility. Phương án kỹ thuật được trình rõ để BO/BA phê duyệt tại Business gate; thiết kế chi tiết và kiểm thử phải bám quyết định được ghi nhận.
 
 | ID | Quyết định và căn cứ | Phương án trình duyệt | Tác động / tiêu chí đóng | Chủ sở hữu |
 | --- | --- | --- | --- | --- |
-| DEC-01 | SRS BR-03 chỉ cấm trùng ACTIVE; persistence BANNED unique xuyên trạng thái | Giữ một hồ sơ định danh xuyên vòng đời, dùng supplement/reapply và lưu lịch sử từng lần | BO xác nhận UX/API; nếu cho tạo hồ sơ mới phải đổi unique và migration trước release | BO/Watchlist |
-| DEC-02 | BR-17 yêu cầu full PII list/export; service che dữ liệu và tách reveal. Import giới hạn 20.000 dòng | Kiểm full PII theo quyền riêng và audit; giữ giới hạn xử lý file có thông báo rõ | Ma trận role/action, export policy, giới hạn file/dòng được ghi vào SRS và L3-API | BO/Security/Watchlist |
+| DEC-01 | Tính duy nhất của hồ sơ cấm bán và lịch sử áp dụng theo BR-03 | Giữ một hồ sơ định danh xuyên vòng đời, dùng supplement/reapply và lưu lịch sử từng lần | BO xác nhận UX/API; nếu cho tạo hồ sơ mới phải đổi unique và migration trước release | BO/Watchlist |
+| DEC-02 | Quyền xem PII theo BR-17 và giới hạn dữ liệu mỗi lần import | Kiểm full PII theo quyền riêng và audit; giữ giới hạn xử lý file có thông báo rõ | Ma trận role/action, export policy, giới hạn file/dòng được ghi vào SRS và L3-API | BO/Security/Watchlist |
 | DEC-03 | Hạn chế bán: mốc fallback Đại lý, lượt khóa sau grace và xử lý GD trong thời gian cấm | Ưu tiên lastValidDepositDate, sau đó firstActivatedAt; xác định riêng fallback, grace effective date và eligibility | Decision table bao phủ thiếu ngày, ngày biên, lượt quét và giao dịch bị hủy; QA lấy cùng expected | BO/Integration |
 | DEC-04 | Chu kỳ: ưu tiên IMMEDIATE so với terminal và chuyển audience | Giữ terminal cho tới quyết định mở lại; audience change đưa BLOCKED để bảo toàn lịch sử | BO xác định ngày hiệu lực, chính sách giữ/reset kỳ và thông báo; calculator tests cập nhật đồng bộ | BO/Analytics |
-| DEC-05 | Vùng INACTIVE: SRS khóa sửa; service cho hiệu chỉnh CMS links | Cho phép ngoại lệ hiệu chỉnh CMS để khôi phục liên kết hợp lệ; khóa tên/vai trò và audit đầy đủ | BO xác nhận ngoại lệ, actor được cấp và điều kiện kích hoạt lại | BO/Core |
-| DEC-06 | Phạm vi tùy chọn và role: ranking mở rộng; rank import 11/1101; count Sale dùng tập trạng thái khác nhau | Công bố ranking theo SRS/ALLOW_TIE; xác định role import và mẫu số từng thống kê; tách bộ lọc dự án thành contract riêng nếu đưa vào phạm vi | Ma trận chức năng/role, metric definition và DTO/OpenAPI được phê duyệt trước UAT | BO/Core/Analytics |
+| DEC-05 | Điều kiện hiệu chỉnh liên kết CMS của vùng INACTIVE | Cho phép ngoại lệ hiệu chỉnh CMS để khôi phục liên kết hợp lệ; khóa tên/vai trò và audit đầy đủ | BO xác nhận ngoại lệ, actor được cấp và điều kiện kích hoạt lại | BO/Core |
+| DEC-06 | Phạm vi tùy chọn ranking, quyền import hạng và tập Sale dùng cho thống kê | Công bố ranking theo SRS/ALLOW_TIE; xác định role import và mẫu số từng thống kê; tách bộ lọc dự án thành contract riêng nếu đưa vào phạm vi | Ma trận chức năng/role, metric definition và Schema/OpenAPI được phê duyệt trước UAT | BO/Core/Analytics |
 
 ## 16.4 Migration & Compatibility Controls
 
-Tích hợp danh tính chuẩn hóa qua OCR/eKYC FPT; các call site legacy được thay theo REL-01. Hạng đại lý dùng A/B/C; cập nhật hạng qua import có preview/version. Quan hệ vùng/dự án bảo vệ bằng khóa cha và kiểm overlap tại service. Thay đổi schema, quyền hoặc event contract phải có migration, API-diff và consumer compatibility report.
+Tích hợp xác minh danh tính tuân theo L3-IDV; quyền xem tài liệu phục vụ duyệt được nghiệm thu theo REL-01. Hạng đại lý dùng A/B/C; cập nhật hạng qua import có preview/version. Quan hệ vùng/dự án bảo vệ bằng khóa cha và kiểm overlap tại service. Thay đổi schema, quyền hoặc event contract phải có migration, API-diff và consumer compatibility report.
 
 Lịch sử dữ liệu cũ được giữ phục vụ đối soát. Cutover không phát lại notification hoặc lệnh Profile hàng loạt; mỗi side effect được xử lý theo trạng thái thực tế và runbook đã nghiệm thu.
 
@@ -1280,45 +1285,34 @@ Lịch sử dữ liệu cũ được giữ phục vụ đối soát. Cutover kh�
 | BLOCKED / PENDING | Chu kỳ thiếu/xung đột đầu vào / chưa đến ngày bán |
 | TERMINATION_PROPOSED | Đề xuất ngừng hợp tác; không phải lệnh khóa tài khoản |
 | roomExcluded | Điều kiện loại do chu kỳ; không là số hạn mức hoặc lệnh thu hồi căn |
-| UNKNOWN / LOGGED | Outcome side effect không xác định / adapter ghi log; phân biệt với SENT |
+| UNKNOWN / SENT | Outcome gửi không xác định / đã có xác nhận từ kênh |
 | Effective-dated | Lưu lịch sử khoảng ngày bắt đầu/kết thúc hiệu lực |
 
-## B. References & Baselines
+## B. Tài liệu nghiệp vụ tham chiếu
 
-| Tài liệu | Phiên bản tham chiếu |
+| Tài liệu | Phạm vi nghiệp vụ |
 | --- | --- |
-| [TTD mẫu OCR/eKYC](https://vin3s.atlassian.net/wiki/spaces/VARW/pages/3014268156) | v29 — 02/10/2026 |
-| [TTD Cobroker gốc](https://vin3s.atlassian.net/wiki/spaces/VARW/pages/3000048322) | v5 — 02/10/2026, trước cập nhật |
-| [SRS xếp hạng Sale](https://vin3s.atlassian.net/wiki/spaces/BMAS/pages/3174598094) | v33 — 14/10/2026 |
-| [SRS cấm/hạn chế bán](https://vin3s.atlassian.net/wiki/spaces/BMAS/pages/3174272140) | v38 — 13/10/2026 |
-| [SRS chu kỳ bán hàng](https://vin3s.atlassian.net/wiki/spaces/BMAS/pages/3174532173) | v12 — 08/10/2026 |
-| [SRS vùng/đại lý/liên minh/pháp nhân](https://vin3s.atlassian.net/wiki/spaces/BMAS/pages/3196028657) | v6 — 07/10/2026 |
-
-| Repository | Commit tham chiếu | Artefact trọng tâm |
-| --- | --- | --- |
-| vhm-cobroker-core | b0fb618b044b61b8c87584ff14f4460fcebedda7 | AgencyProfileInternalController; onboarding/admin controllers; VhmOcrEKycClient; Region/AgencyRegion/AgencyRanking/Alliance/LegalProject services; migrations0086–0090 |
-| vhm-sales-analytics-service | 438de8d36dc9403dc3e126e90c48ba5ed630a0b2 | ranking/cycle controllers, calculators, PipelineEligibility, UserSyncData, jobs, migrations/config/tests |
-| vhm-watchlist-service | 24b3be53165095881788ab1574bcfb3a2454cef0 | SaleControlWriter, ProfileSaleControlsSender, SalesAnalyticsFactsClient, scanner, import/controllers/migrations/tests |
-| ocr-ekyc | 8a10f1428414ed0343e64244decfe5bc4d770729 | Ocr/Ekyc/Media controllers; Fpt clients; docs invariants/contracts/workflows/security/reliability; OpenAPI |
-
-Các commit trên là mốc truy vết artefact kỹ thuật. Release record ghi image và cấu hình triển khai; mục 16.2 quản lý các hạng mục tích hợp/cutover. Thiết kế danh tính thống nhất sử dụng FPT qua service OCR/eKYC.
+| [SRS xếp hạng Sale](https://vin3s.atlassian.net/wiki/spaces/BMAS/pages/3174598094) | Bảng quý, cấu hình, badge và chứng nhận |
+| [SRS cấm/hạn chế bán](https://vin3s.atlassian.net/wiki/spaces/BMAS/pages/3174272140) | Quản lý đối tượng, kiểm soát tài khoản, import và tra cứu |
+| [SRS chu kỳ bán hàng](https://vin3s.atlassian.net/wiki/spaces/BMAS/pages/3174532173) | Chính thức/thử thách, chỉ tiêu, cảnh báo và ngày bắt đầu bán |
+| [SRS vùng/đại lý/liên minh/pháp nhân](https://vin3s.atlassian.net/wiki/spaces/BMAS/pages/3196028657) | Vùng chủ quản, vùng bán, hạng đại lý, liên minh và pháp nhân |
 
 ## C. Đầu vào bắt buộc trước production
 
-Go-live package gồm approval record, contract INT-01…INT-05, quyết định DEC-01…DEC-06, backfill Q3, cấu hình job/scanner/FPT, migration rehearsal, report UAT/security/load/restore, SLO, retention và RTO/RPO. Mỗi artefact gắn phiên bản, owner và kết quả nghiệm thu tại Governance Gates.
+Go-live package gồm approval record, contract INT-01…INT-05, quyết định DEC-01…DEC-06, backfill Q3, cấu hình job/scanner/tích hợp, migration rehearsal, report UAT/security/load/restore, SLO, retention và RTO/RPO. Mỗi artefact gắn phiên bản, owner và kết quả nghiệm thu tại Governance Gates.
 
 ## D. Danh mục quyết định kiến trúc (ADR)
 
 | ID | Quyết định mô tả trong TTD | Lý do / hệ quả |
 | --- | --- | --- |
 | ADR-01 | Một TTD, domain thuộc các service riêng | Tránh trùng tài liệu nhưng vẫn giữ ownership dữ liệu |
-| ADR-02 | FPT qua OCR/eKYC; OCR async, SDK sync | Core không sở hữu credential; phải giữ hai contract/retry khác nhau |
+| ADR-02 | Xác minh danh tính qua dịch vụ bên ngoài | Core sở hữu hồ sơ, liên kết yêu cầu và quyết định nghiệp vụ; hợp đồng tách biệt xử lý nội bộ của dịch vụ xác minh |
 | ADR-03 | Ranking dùng bucket và run/batch công bố | Đọc nhanh, cần reconcile và giám sát độ trễ |
 | ADR-04 | Cycle calculator từ facts, transaction theo Sale | Tái tính được lịch sử, cần đủ nguồn và xử lý late/cancel |
 | ADR-05 | Watchlist dùng domain record + outbox, đọc state lúc send | Có độ trễ nhưng tránh lệnh cũ áp sai trạng thái hiện hành |
 | ADR-06 | Vùng chủ quản độc lập vùng bán; dự án đại lý từ Sale assigned | Quan hệ rõ ràng, đòi hỏi scope nguồn chính xác |
 | ADR-07 | Khoảng hiệu lực kiểm dưới khóa cha | Không phụ thuộc GiST exclusion; phải cấm bypass writer nghiệp vụ |
 | ADR-08 | Import hạng preview/version, commit toàn bộ | Người dùng cần preview lại khi dữ liệu thay đổi |
-| ADR-09 | Badge/chứng nhận là luồng render riêng | Tách tải render khỏi API bảng; private storage và self-access, delivery theo INT-04 |
+| ADR-09 | Badge/chứng nhận là luồng render riêng | Tách tải render khỏi API bảng; private storage và self-access, nghiệm thu theo INT-04 |
 
 ADR là căn cứ triển khai và review thay đổi kiến trúc. Mọi thay đổi quyết định phải cập nhật tác động dữ liệu, contract, migration và tiêu chí kiểm thử liên quan.

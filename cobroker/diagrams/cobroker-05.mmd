@@ -1,24 +1,23 @@
 sequenceDiagram
-    participant U as Web/App
-    participant B as BFF/Core
-    participant E as OCR eKYC
-    participant Q as Outbox/Kafka/Worker
-    participant F as FPT
-    participant FS as File Service
-    U->>B: Chuẩn bị upload và nộp media refs
-    B->>E: POST media/prepare-upload
-    E-->>B: Media refs / upload contract
-    B-->>U: Thông tin upload
-    U->>FS: Upload theo contract
-    U->>B: Tạo OCR hồ sơ
-    B->>E: POST ocrs + Idempotency-Key
-    E->>Q: Lưu request/outbox, enqueue
-    E-->>B: Accepted + OCR ID
-    Q->>F: Submit OCR
-    F-->>Q: Pending / kết quả
-    Q->>Q: Schedule poll, không giữ transaction chờ
-    U->>B: Tra trạng thái
-    B->>E: GET ocrs/{id}
-    E-->>B: Status, outcome, result
-    B->>B: Đối soát dữ liệu và điều kiện hồ sơ
-    B-->>U: Kết quả nghiệp vụ / yêu cầu bổ sung
+    participant U as Sale / Người được cấp quyền
+    participant B as BFF
+    participant C as Cobroker Core
+    participant D as Dữ liệu hồ sơ
+    participant E as Dịch vụ OCR/eKYC
+    U->>B: Gửi thông tin và tài liệu hồ sơ
+    B->>C: Yêu cầu xác minh theo actor
+    C->>D: Kiểm quyền, hồ sơ và điều kiện đầu vào
+    C->>E: Gửi yêu cầu xác minh
+    E-->>C: Mã yêu cầu / phiên
+    C->>D: Liên kết yêu cầu với hồ sơ
+    C->>E: Lấy kết quả theo mã đã liên kết
+    E-->>C: Trạng thái và dữ liệu xác minh
+    C->>C: Đối chiếu với thông tin hồ sơ
+    alt Đủ kết quả và thông tin phù hợp
+        C->>D: Lưu kết quả đối soát
+        C-->>B: Hồ sơ đáp ứng bước xác minh
+    else Thiếu kết quả, sai lệch hoặc lỗi
+        C->>D: Lưu tình trạng và lý do
+        C-->>B: Chờ kết quả / bổ sung / xử lý hồ sơ
+    end
+    B-->>U: Hiển thị kết quả nghiệp vụ

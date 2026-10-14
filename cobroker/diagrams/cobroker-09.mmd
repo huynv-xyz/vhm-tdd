@@ -1,9 +1,9 @@
 sequenceDiagram
     participant E as Job / data-change
-    participant S as CalculatorService
+    participant S as Điều phối chu kỳ
     participant D as PostgreSQL
-    participant C as Calculator
-    E->>S: recalculate(username)
+    participant C as Bộ tính chu kỳ
+    E->>S: Yêu cầu tính lại chu kỳ của Sale
     S->>D: Khóa user, đọc đầu vào và kết quả
     alt Thiếu đầu vào hoặc đổi audience chưa xử lý
         S->>D: Lưu BLOCKED và lý do

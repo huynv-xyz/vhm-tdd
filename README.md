@@ -9,9 +9,9 @@
 3. Theo dõi chu kỳ bán hàng, cảnh báo ngừng hợp tác.
 4. Quản lý vùng, đại lý, liên minh và pháp nhân.
 
-Tích hợp OCR/eKYC hiện hành sử dụng FPT qua service OCR/eKYC. Tài liệu có 16 mục theo mẫu L2 OCR/eKYC; đặc tả quyết định kiến trúc, quy tắc nghiệp vụ, hợp đồng tích hợp và tiêu chí nghiệm thu.
+Tài liệu gồm 16 mục đặc tả nghiệp vụ Cobroker và bốn phân hệ, kiến trúc, hợp đồng tích hợp, mô hình dữ liệu và tiêu chí nghiệm thu. OCR/eKYC được xem là dịch vụ bên ngoài, chỉ mô tả giao tiếp và kết quả Cobroker sử dụng.
 
 - [Bản Confluence](https://vin3s.atlassian.net/wiki/spaces/VARW/pages/3000048322)
 - [Sơ đồ PNG và nguồn Mermaid](cobroker/diagrams)
 
-Phiên bản thiết kế: v0.2 — 14/10/2026. Quy trình thẩm định, trách nhiệm và các quyết định nghiệp vụ được quản lý trong TTD.
+Phiên bản thiết kế: v0.3 — 14/10/2026. Quy trình thẩm định, trách nhiệm và các quyết định nghiệp vụ được quản lý trong TTD.

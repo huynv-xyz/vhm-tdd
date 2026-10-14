@@ -1,14 +1,20 @@
 sequenceDiagram
-    participant S as SDK qua BFF/domain
-    participant E as OCR eKYC
-    participant F as FPT
-    S->>E: init_session
-    E->>F: Thêm credential, gọi một lần
-    F-->>E: Session response
-    E-->>S: Response theo contract SDK
-    S->>E: OCR / liveness / NFC theo phiên
-    E->>F: Forward đồng bộ
-    F-->>E: HTTP status + body
-    E-->>S: Preserve contract, không auto retry
-    S->>E: Core query by-session sau luồng
-    E-->>S: Kết quả/evidence theo quyền
+    participant U as Sale / Người được cấp quyền
+    participant C as Cobroker Core
+    participant D as Dữ liệu hồ sơ
+    participant R as Người xử lý hồ sơ
+    U->>C: Nộp hồ sơ
+    C->>D: Kiểm thông tin, tài liệu và kết quả xác minh
+    C->>D: Ghi nhận hồ sơ nộp xử lý
+    R->>C: Nhận xử lý / phân công
+    C->>D: Kiểm quyền và người phụ trách
+    R->>C: Gửi quyết định và lý do
+    C->>D: Kiểm trạng thái và dữ liệu hồ sơ
+    alt Phê duyệt hợp lệ
+        C->>D: Lưu quyết định và cập nhật hồ sơ
+    else Kiểm tra thủ công hoặc từ chối
+        C->>D: Lưu hướng xử lý và lý do
+    end
+    C-->>R: Kết quả xử lý đã lưu
+    U->>C: Tra cứu hồ sơ
+    C-->>U: Trạng thái và thông tin được phép xem

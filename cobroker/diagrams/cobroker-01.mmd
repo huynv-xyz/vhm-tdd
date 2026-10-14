@@ -1,10 +1,9 @@
 flowchart LR
-    U["Web / App / SDK"] --> B["Agent / Cobroker BFF"]
+    U["Web / App"] --> B["Agent / Cobroker BFF"]
     B --> C["CoBroker Core"]
     B --> A["Sales Analytics"]
     B --> W["Watchlist"]
     C --> E["OCR/eKYC service"]
-    E --> F["FPT OCR / eKYC"]
     C --> P["Profile / IAM / CMS"]
     P --> A
     D["Sales Pipeline"] --> A
@@ -12,12 +11,9 @@ flowchart LR
     W --> P
     C --> H["History / Notification / File"]
     W --> H
-    E --> H
     C --> CD[("Core DB")]
     A --> AD[("Analytics DB")]
     W --> WD[("Watchlist DB")]
-    E --> ED[("OCR/eKYC DB")]
     A <--> K["Kafka / Outbox"]
     W --> K
     C --> K
-    E <--> K
