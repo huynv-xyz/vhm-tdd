@@ -1,14 +1,17 @@
 sequenceDiagram
-    participant J as Job
-    participant D as Database
-    participant K as Outbox/Kafka
+    participant J as Bộ điều phối
+    participant D as Database và Outbox
+    participant P as Outbox publisher
+    participant K as Kafka
     participant W as Worker
-    J->>D: Tạo run và batch, kiểm tra điều kiện chạy
-    J->>K: Enqueue yêu cầu trong transaction
+    J->>D: Transaction ghi run, batch và outbox
+    D-->>J: Commit
+    P->>D: Nhận outbox chưa gửi
+    P->>K: Phát yêu cầu theo event ID
     K->>W: Nhận batch, có thể nhận lặp
-    W->>D: Kiểm trạng thái, tổng hợp và ghi bucket
-    W->>D: Hoàn tất batch
+    W->>D: Kiểm version, tổng hợp và hoàn tất batch
     J->>D: Kiểm đủ dữ liệu và quý đã kết thúc
-    J->>K: Yêu cầu tính hạng
-    K->>W: Tính điểm và phân hạng theo cấu hình
-    W->>D: Ghi results và công bố cycle run
+    J->>D: Transaction ghi yêu cầu tính hạng và outbox
+    P->>K: Phát yêu cầu tính hạng sau commit
+    K->>W: Tính điểm và phân hạng
+    W->>D: Ghi tập kết quả, công bố nguyên tử khi đủ nhóm

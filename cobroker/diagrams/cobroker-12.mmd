@@ -11,3 +11,15 @@ flowchart TB
     W --> R
     A --> K["Kafka"]
     W --> K
+    C --> K
+    C --> P["Profile / IAM / CMS"]
+    W -->|"Thrift: đối soát tài khoản"| P
+    P --> A
+    PL["Pipeline"] --> A
+    W -->|"REST: facts"| A
+    C --> F["File Service"]
+    A --> F
+    W --> F
+    A --> N["Notification"]
+    C --> N
+    K --> H["History"]

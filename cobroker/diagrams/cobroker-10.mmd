@@ -1,7 +1,17 @@
 stateDiagram-v2
-    [*] --> OfficialNotMet
-    OfficialNotMet --> OfficialMet: đạt chỉ tiêu
-    OfficialMet --> OfficialNotMet: D+1 sau hết kỳ, mở kỳ mới
-    OfficialNotMet --> Trial: D+1 sau hết kỳ chưa đạt
-    Trial --> OfficialNotMet: D+1 sau ngày đạt thử thách
-    Trial --> TerminationProposed: hết thử thách chưa đạt
+    [*] --> Evaluation
+    state Evaluation <<choice>>
+    Evaluation --> Pending: Ngày bắt đầu ở tương lai
+    Evaluation --> Blocked: Thiếu đầu vào hoặc cần xử lý
+    Evaluation --> Completed: Đủ đầu vào
+    Pending --> Evaluation: Đến ngày hoặc nguồn thay đổi
+    Blocked --> Evaluation: Đầu vào được bổ sung
+    Completed --> Evaluation: Nguồn hoặc cấu hình thay đổi
+    state Completed {
+        [*] --> OfficialNotMet
+        OfficialNotMet --> OfficialMet: Đạt chỉ tiêu
+        OfficialMet --> OfficialNotMet: Hết kỳ, mở kỳ mới
+        OfficialNotMet --> Trial: Hết kỳ chưa đạt
+        Trial --> OfficialNotMet: Ngày sau ngày đạt
+        Trial --> TerminationProposed: Hết thử thách chưa đạt
+    }

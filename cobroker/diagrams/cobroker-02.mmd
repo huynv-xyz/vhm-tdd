@@ -7,4 +7,5 @@ erDiagram
     COBROKER_PROFILES ||--o{ AGENCY_COBROKER : "lien ket"
     AGENCY_PROFILES ||--o{ LEGAL_ENTITIES : "phap nhan"
     LEGAL_ENTITIES ||--o{ LEGAL_PROJECTS : "du an"
-    AGENCY_PROFILES ||--o{ ALLIANCES : "dung dau hoac thanh vien"
+    ALLIANCES ||--|{ ALLIANCE_MEMBERS : "thanh vien"
+    AGENCY_PROFILES ||--o{ ALLIANCE_MEMBERS : "tham gia"

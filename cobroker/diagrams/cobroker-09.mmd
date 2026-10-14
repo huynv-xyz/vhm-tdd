@@ -10,7 +10,7 @@ sequenceDiagram
     else Đầu vào hợp lệ
         S->>C: startDate, today, configs, facts
         C-->>S: Timeline, classification, roomExcluded
-        S->>D: Lưu result và periods
-        S->>D: Điều hòa lịch / hủy lịch khi PENDING
+        S->>D: Lưu result, periods và audit hiệu chỉnh
+        S->>D: Điều hòa lịch, hủy khi PENDING hoặc inactive
     end
     S-->>E: Commit hoặc lỗi để xử lý lại

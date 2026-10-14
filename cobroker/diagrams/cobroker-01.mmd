@@ -11,9 +11,10 @@ flowchart LR
     W --> P
     C --> H["History / Notification / File"]
     W --> H
-    C --> CD[("Core DB")]
-    A --> AD[("Analytics DB")]
-    W --> WD[("Watchlist DB")]
-    A <--> K["Kafka / Outbox"]
+    A --> H
+    C --> CD[("Core DB / Outbox")]
+    A --> AD[("Analytics DB / Outbox")]
+    W --> WD[("Watchlist DB / Outbox")]
+    A <--> K["Kafka"]
     W --> K
     C --> K
