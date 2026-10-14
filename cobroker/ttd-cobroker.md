@@ -626,9 +626,9 @@ erDiagram
 
 Sơ đồ mô tả quan hệ logic giữa các aggregate; khóa ngoại và index vật lý được quản lý trong Liquibase. Tên rút gọn tương ứng bảng ở trên.
 
-### 7.2.2 Dữ liệu cá nhân và sở hữu
+### 7.2.2 Nguồn dữ liệu nhân sự và tổ chức
 
-Profile quản lý thông tin nhân sự, gồm họ tên, thông tin định danh, điện thoại/email và đơn vị tổ chức. Analytics gọi Profile để lấy dữ liệu và tiếp nhận các thay đổi qua hợp đồng đồng bộ. Bản dữ liệu đồng bộ tại Analytics phục vụ tra cứu, lọc và tổng hợp báo cáo; mọi chỉnh sửa thông tin nhân sự được thực hiện tại Profile. Hạn chế log dữ liệu cá nhân, kiểm soát quyền xuất báo cáo và tải file chứng nhận. Thời hạn lưu được phân loại riêng cho bản dữ liệu đồng bộ, báo cáo, chứng nhận và audit theo mục 7.6.
+Profile cung cấp dữ liệu nhân sự và tổ chức cho Analytics phục vụ báo cáo.
 
 ## 7.3 Dữ liệu Watchlist
 
