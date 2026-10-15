@@ -3,6 +3,7 @@ flowchart LR
     B --> C["CoBroker Core"]
     B --> A["Sales Analytics"]
     B --> W["Watchlist"]
+    C -->|"Checks trước thao tác nghiệp vụ"| W
     C --> E["OCR/eKYC service"]
     C --> P["Profile / IAM / CMS"]
     P --> A

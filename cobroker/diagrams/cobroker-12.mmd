@@ -2,6 +2,7 @@ flowchart TB
     G["Ingress / API Gateway / BFF"] --> C["Core pods"]
     G --> A["Analytics pods"]
     G --> W["Watchlist pods"]
+    C -->|"REST: checks trước mutation"| W
     C --> E["Dịch vụ OCR/eKYC bên ngoài"]
     C --> DB["PostgreSQL theo ownership"]
     A --> DB

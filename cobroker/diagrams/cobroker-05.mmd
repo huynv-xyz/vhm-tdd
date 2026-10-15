@@ -1,7 +1,8 @@
 sequenceDiagram
-    participant U as Sale / Người được cấp quyền
+    participant U as Sale / Người<br/>được cấp quyền
     participant B as BFF
     participant C as Cobroker Core
+    participant J as Worker tra cứu<br/>của Core
     participant D as Dữ liệu hồ sơ
     participant E as Dịch vụ OCR/eKYC
     U->>B: Gửi thông tin và tài liệu hồ sơ
@@ -10,14 +11,20 @@ sequenceDiagram
     C->>E: Gửi yêu cầu xác minh
     E-->>C: Mã yêu cầu / phiên
     C->>D: Liên kết yêu cầu với hồ sơ
-    C->>E: Lấy kết quả theo mã đã liên kết
-    E-->>C: Trạng thái và dữ liệu xác minh
-    C->>C: Đối chiếu với thông tin hồ sơ
+    C-->>B: Đã tiếp nhận, đang chờ kết quả
+    B-->>U: Hiển thị trạng thái chờ
+    Note over J,E: Tra cứu nền theo ngân sách retry/timeout mục 6.3.1
+    J->>D: Đọc yêu cầu đã liên kết còn chờ
+    J->>E: Lấy kết quả, không giữ khóa DB
+    E-->>J: Trạng thái và dữ liệu xác minh
+    J->>D: Kiểm liên kết/version và đối chiếu hồ sơ hiện hành
     alt Đủ kết quả và thông tin phù hợp
-        C->>D: Lưu kết quả đối soát
-        C-->>B: Hồ sơ đáp ứng bước xác minh
+        J->>D: Lưu kết quả đối soát
     else Thiếu kết quả, sai lệch hoặc lỗi
-        C->>D: Lưu tình trạng và lý do
-        C-->>B: Chờ kết quả / bổ sung / xử lý hồ sơ
+        J->>D: Lưu trạng thái chờ / bổ sung / xử lý tích hợp
     end
+    U->>B: Tra cứu trạng thái hồ sơ
+    B->>C: Đọc kết quả đã ghi nhận theo actor
+    C->>D: Kiểm quyền và đọc trạng thái
+    C-->>B: Trạng thái / kết quả được phép xem
     B-->>U: Hiển thị kết quả nghiệp vụ

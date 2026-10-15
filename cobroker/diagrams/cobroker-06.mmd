@@ -1,11 +1,21 @@
 sequenceDiagram
-    participant U as Sale / Người được cấp quyền
+    participant U as Sale / Người<br/>được cấp quyền
     participant C as Cobroker Core
     participant D as Dữ liệu hồ sơ
     participant R as Người xử lý hồ sơ
+    participant W as Watchlist
     U->>C: Nộp hồ sơ
-    C->>D: Kiểm thông tin, tài liệu và kết quả xác minh
-    C->>D: Ghi nhận hồ sơ nộp xử lý
+    C->>D: Đọc thông tin, kết quả xác minh và version
+    C->>W: Checks theo actor/định danh, ngoài khóa DB
+    W-->>C: Quyết định kiểm soát / lỗi
+    break Checks không cho phép / lỗi
+        C-->>U: Không nộp, xử lý theo quyết định / DEC-07
+    end
+    C->>D: Transaction kiểm lại version, trạng thái và đầu vào
+    break Hồ sơ không còn hợp lệ
+        C-->>U: Không ghi, đọc và kiểm lại theo mục 6.5.2
+    end
+    C->>D: Ghi hồ sơ nộp xử lý và audit, commit
     R->>C: Nhận xử lý / phân công
     C->>D: Kiểm quyền và người phụ trách
     R->>C: Gửi quyết định và lý do
