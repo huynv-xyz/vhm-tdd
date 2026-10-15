@@ -9,7 +9,7 @@ sequenceDiagram
     W->>D: Validate và lưu control + outbox
     W-->>B: Kết quả nghiệp vụ đã commit
     O->>D: Claim outbox, đọc controls hiện hành
-    O->>P: Đồng bộ sale_controls/status hoặc history
+    O->>P: Snapshot controls, revision, thế hệ chặn hoặc history
     alt Thành công
         O->>D: Ghi nhận hoàn tất
     else Lỗi / chưa rõ kết quả

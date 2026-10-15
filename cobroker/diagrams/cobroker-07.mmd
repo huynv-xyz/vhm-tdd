@@ -10,8 +10,8 @@ sequenceDiagram
     P->>K: Phát yêu cầu theo event ID
     K->>W: Nhận batch, có thể nhận lặp
     W->>D: Kiểm version, tổng hợp và hoàn tất batch
-    J->>D: Kiểm đủ dữ liệu và quý đã kết thúc
+    J->>D: Kiểm cutoff, watermark đã đối soát và quý đã kết thúc
     J->>D: Transaction ghi yêu cầu tính hạng và outbox
     P->>K: Phát yêu cầu tính hạng sau commit
     K->>W: Tính điểm và phân hạng
-    W->>D: Ghi tập kết quả, công bố nguyên tử khi đủ nhóm
+    W->>D: Ghi và công bố nguyên tử toàn quý khi đủ nhóm

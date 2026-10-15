@@ -5,14 +5,16 @@ flowchart LR
     B --> W["Watchlist"]
     C -->|"Checks trước thao tác nghiệp vụ"| W
     C --> E["OCR/eKYC service"]
-    C --> P["Profile / IAM / CMS"]
+    C -->|"Vòng đời và quyền Sale (INT-05)"| P["Profile / IAM / CMS"]
     P --> A
+    C -->|"Projection quan hệ có version (INT-06)"| A
     D["Sales Pipeline"] --> A
-    W -->|"Sale activity facts"| A
-    W --> P
+    W -->|"Đọc facts (INT-01)"| A
+    W -->|"Kiểm soát riêng (INT-05)"| P
     C --> H["History / Notification / File"]
     W --> H
     A --> H
+    Q["Quỹ căn"] -->|"Đọc điều kiện chu kỳ hiện hành"| A
     C --> CD[("Core DB / Outbox")]
     A --> AD[("Analytics DB / Outbox")]
     W --> WD[("Watchlist DB / Outbox")]

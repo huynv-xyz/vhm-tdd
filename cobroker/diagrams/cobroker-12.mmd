@@ -1,7 +1,8 @@
 flowchart TB
-    G["Ingress / API Gateway / Agent BFF"] --> C["Core pods"]
-    G --> A["Analytics pods"]
-    G --> W["Watchlist pods"]
+    G["Ingress / API Gateway"] --> B["Agent BFF"]
+    B --> C["Core pods"]
+    B --> A["Analytics pods"]
+    B --> W["Watchlist pods"]
     C -->|"REST: checks trước mutation"| W
     C --> E["Dịch vụ OCR/eKYC bên ngoài"]
     C --> DB["PostgreSQL theo ownership"]
@@ -13,14 +14,16 @@ flowchart TB
     A --> K["Kafka"]
     W --> K
     C --> K
-    C --> P["Profile / IAM / CMS"]
-    W -->|"Thrift: đối soát tài khoản"| P
+    C -->|"Vòng đời và quyền Sale (INT-05)"| P["Profile / IAM / CMS"]
+    W -->|"Thrift: kiểm soát riêng (INT-05)"| P
     P --> A
+    C -->|"Projection quan hệ có version (INT-06)"| A
     PL["Pipeline"] --> A
-    W -->|"REST: facts"| A
+    W -->|"REST: đọc facts (INT-01)"| A
     C --> F["File Service"]
     A --> F
     W --> F
     A --> N["Notification"]
     C --> N
     K --> H["History"]
+    Q["Quỹ căn"] -->|"S2S: eligibility có version"| A

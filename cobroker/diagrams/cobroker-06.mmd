@@ -1,30 +1,53 @@
 sequenceDiagram
-    participant U as Sale / Người<br/>được cấp quyền
+    participant U as Sale
+    participant R as Người duyệt
+    participant B as Agent BFF
     participant C as Cobroker Core
     participant D as Dữ liệu hồ sơ
-    participant R as Người xử lý hồ sơ
     participant W as Watchlist
-    U->>C: Nộp hồ sơ
-    C->>D: Đọc thông tin, kết quả xác minh và version
-    C->>W: Checks theo actor/định danh, ngoài khóa DB
-    W-->>C: Quyết định kiểm soát / lỗi
-    break Checks không cho phép / lỗi
-        C-->>U: Không nộp, xử lý theo quyết định / DEC-07
+    participant P as Profile
+    U->>B: Nộp hồ sơ đang xem
+    B->>C: Submit với actor, registration và version
+    C->>D: Kiểm quyền, đọc lần hiện hành và đầu vào
+    C->>W: Checks bằng service principal Core
+    W-->>C: Quyết định / lỗi, check request ID
+    break Không cho phép / không xác định
+        C-->>B: Không nộp theo DEC-07
+        B-->>U: Trạng thái và hướng xử lý
     end
-    C->>D: Transaction kiểm lại version, trạng thái và đầu vào
-    break Hồ sơ không còn hợp lệ
-        C-->>U: Không ghi, đọc và kiểm lại theo mục 6.5.2
+    C->>D: Transaction kiểm lại version và lưu hồ sơ nộp
+    C-->>B: Đã nộp
+    B-->>U: Chờ xét duyệt
+    Note over R,W: Xét duyệt có thể diễn ra sau nhiều ngày
+    R->>B: Gửi quyết định và lý do
+    B->>C: Approval action với actor và version
+    C->>D: Kiểm người phụ trách, hồ sơ và điều kiện
+    alt APPROVED dẫn tới kích hoạt
+        C->>W: Checks mới theo tài khoản/định danh hiện hành
+        W-->>C: Quyết định / lỗi
+        break Không cho phép / không xác định
+            C-->>B: Dừng thao tác theo DEC-07
+            B-->>R: Trạng thái và hướng xử lý
+        end
+        C->>D: Transaction kiểm lại hồ sơ/version
+        alt Kích hoạt ngay
+            C->>D: Lưu duyệt và yêu cầu kích hoạt, audit/outbox
+        else Kích hoạt staged
+            C->>D: Lưu duyệt, job kích hoạt và audit/outbox
+            Note over C,W: Worker kiểm lại trước kích hoạt theo mục 6.5.2
+        end
+    else REJECTED / REQUEST_UPDATE
+        C->>D: Kiểm version, lưu quyết định và lý do
     end
-    C->>D: Ghi hồ sơ nộp xử lý và audit, commit
-    R->>C: Nhận xử lý / phân công
-    C->>D: Kiểm quyền và người phụ trách
-    R->>C: Gửi quyết định và lý do
-    C->>D: Kiểm trạng thái và dữ liệu hồ sơ
-    alt Phê duyệt hợp lệ
-        C->>D: Lưu quyết định và cập nhật hồ sơ
-    else Kiểm tra thủ công hoặc từ chối
-        C->>D: Lưu hướng xử lý và lý do
+    C-->>B: Kết quả duyệt, kích hoạt PENDING nếu chưa xác nhận
+    B-->>R: Hiển thị kết quả
+    opt Có yêu cầu kích hoạt, xử lý sau commit
+        Note over C,P: Worker staged kiểm Watchlist mới trước gửi
+        C->>P: Yêu cầu vòng đời có revision, không xóa chặn Watchlist
+        P-->>C: Receipt và trạng thái hiệu lực / chặn / lỗi
+        C->>D: Cập nhật tác vụ, đối soát hoặc retry theo 3.1.1
     end
-    C-->>R: Kết quả xử lý đã lưu
-    U->>C: Tra cứu hồ sơ
-    C-->>U: Trạng thái và thông tin được phép xem
+    U->>B: Tra cứu hồ sơ
+    B->>C: Đọc theo actor
+    C-->>B: Trạng thái và thông tin được phép xem
+    B-->>U: Hiển thị hồ sơ
