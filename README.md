@@ -14,4 +14,4 @@ Tài liệu gồm 16 mục đặc tả nghiệp vụ Cobroker và bốn phân h�
 - [Bản Confluence](https://vin3s.atlassian.net/wiki/spaces/VARW/pages/3000048322)
 - [Sơ đồ PNG và nguồn Mermaid](cobroker/diagrams)
 
-Phiên bản thiết kế: v0.9 — 15/10/2026. Quy trình thẩm định, trách nhiệm và các quyết định nghiệp vụ được quản lý trong TTD.
+Phiên bản thiết kế: v0.10 — 15/10/2026. Quy trình thẩm định, trách nhiệm và các quyết định nghiệp vụ được quản lý trong TTD.

@@ -2,8 +2,8 @@
 
 | Trường | Nội dung |
 | --- | --- |
-| Trạng thái | DRAFT — trình thẩm định kiến trúc |
-| Phiên bản & lịch sử thay đổi | v0.9 — 15/10/2026 — Chuẩn hóa đặc tả thiết kế; làm rõ force-reject, cấu hình hạn chế bán và trọng số ranking; loại ghi chú review khỏi quy tắc nghiệp vụ |
+| Trạng thái | UNDER REVIEW — chờ thẩm định kiến trúc |
+| Phiên bản & lịch sử thay đổi | v0.10 — 15/10/2026 — Rút gọn L2; export bất đồng bộ; cấu hình chu kỳ dùng version số nguyên |
 | Hệ thống | VHM Agent / Cobroker |
 | Phạm vi thiết kế | CoBroker Core, Sales Analytics và Watchlist |
 | Nhóm chịu trách nhiệm | Backend · Product/Business · Solution Architecture · Integration · ANBM/Security · Data Owner · SRE/DBA |
@@ -11,7 +11,7 @@
 | Nguồn nghiệp vụ | Bốn SRS tại Appendix B |
 | Tài liệu L3 | API/event contract, data migration, security matrix, test specification và runbook theo L3 Artefact Register |
 
-Tài liệu đặc tả kiến trúc mục tiêu của Cobroker, bao gồm ranh giới dịch vụ, quy tắc nghiệp vụ, hợp đồng tích hợp, mô hình dữ liệu và các điều kiện nghiệm thu. Các yêu cầu trong tài liệu là cơ sở triển khai và kiểm thử. Các điều kiện tích hợp và quyết định nghiệp vụ cần phê duyệt được quản lý tập trung tại mục 16.
+Tài liệu xác định kiến trúc, nghiệp vụ, hợp đồng tích hợp và tiêu chí nghiệm thu Cobroker. Mục 16 quản lý phụ thuộc và thông tin cần hoàn tất trước phê duyệt.
 
 **Review Responsibility Matrix**
 
@@ -24,7 +24,7 @@ Tài liệu đặc tả kiến trúc mục tiêu của Cobroker, bao gồm ranh 
 | Data Owner | Mục đích sử dụng, retention, truy cập và xóa dữ liệu | Data production |
 | QA / SRE / DBA | Test, dung lượng, migration, dashboard, backup/restore và runbook | UAT/OAT/Go-live |
 
-Reviewer, quyết định, ngày xác nhận và evidence được ghi tại workflow thẩm định. Mỗi hạng mục có một nhóm chịu trách nhiệm chính và tiêu chí đóng cụ thể.
+Kết quả thẩm định và bằng chứng nghiệm thu được lưu trong workflow phê duyệt.
 
 **Governance Gates**
 
@@ -45,8 +45,6 @@ Reviewer, quyết định, ngày xác nhận và evidence được ghi tại wor
 | L3-SEC | Ma trận quyền và hợp đồng actor | Security/Backend | Mục 9; actor token, replay, idempotency, enumeration; test quyền đọc/ghi và xuất dữ liệu |
 | L3-QA | Test specification và test report | QA | Mục 15; report gắn phiên bản phát hành/môi trường tại quality gate |
 | L3-OPS | Deployment, capacity, dashboard và runbook | SRE/DBA | Mục 10–14; OAT và diễn tập khôi phục |
-
-Điều kiện nghiệm thu tích hợp được quy định tại mục 16.2; quyết định sản phẩm tại mục 16.3. L3 artefact và evidence nghiệm thu được gắn vào gate tương ứng.
 
 # 1. Business Objectives & Scope
 
@@ -171,7 +169,7 @@ Trạng thái hồ sơ đăng ký, trạng thái xác minh và trạng thái ho�
 
 `APPROVED` kết thúc xét duyệt thông thường nhưng vẫn có thể là hồ sơ hiện hành; `REJECTED`, `CANCELLED`, `REPLACED` không được chọn làm lần hiện hành. Thay thế hồ sơ đã duyệt giữ kết quả/lịch sử quyết định cũ; không biến hồ sơ cũ thành bản nháp để sửa tiếp. Xác minh chờ/lỗi không phải là từ chối hồ sơ. Mỗi chuyển trạng thái kiểm version, trạng thái và quyền trong transaction; `force-reject` là ngoại lệ theo DEC-10.
 
-Duyệt có thể dẫn tới kích hoạt: Core lưu quyết định và yêu cầu kích hoạt bền vững; luồng thông thường thử chuyển yêu cầu ngay sau commit, luồng staged để worker thực hiện sau. Cả hai kiểm Watchlist trước bước cấp trạng thái hoạt động/role; worker phải kiểm lại tại lúc thực thi, không dùng kết quả kiểm lúc nộp hoặc lúc duyệt. Profile áp hợp đồng mục 6.5.3, không tham gia transaction DB của Core. `APPROVED` không tự chứng minh tài khoản đã ACTIVE; phản hồi/hiển thị phân biệt kết quả duyệt và trạng thái kích hoạt.
+Core lưu quyết định duyệt và yêu cầu kích hoạt bền vững. Luồng thông thường gửi sau commit; staged giao worker thực hiện. Cả hai kiểm Watchlist theo mục 6.5.2 và cập nhật Profile theo mục 6.5.3. Giao diện hiển thị riêng kết quả duyệt và trạng thái kích hoạt.
 
 Tác vụ kích hoạt có trạng thái riêng, không bổ sung các trạng thái dưới đây vào enum hồ sơ đăng ký:
 
@@ -183,7 +181,7 @@ Tác vụ kích hoạt có trạng thái riêng, không bổ sung các trạng t
 | Hết ngân sách retry hoặc dữ liệu hồ sơ đã thay | `MANUAL_REVIEW`; cảnh báo người phụ trách, đối soát trước tiếp tục |
 | Profile xác nhận áp yêu cầu và tài khoản đủ điều kiện hoạt động | `SUCCEEDED`; lưu revision/receipt, trạng thái hiệu lực vẫn có thể bị thay bởi quyết định kiểm soát mới |
 
-Sau khi gỡ chặn, tác vụ kích hoạt BLOCKED chỉ tiếp tục qua thao tác có quyền, checks mới và version hồ sơ hiện hành. Sự kiện RELEASED cập nhật trạng thái kiểm soát, không tự tiếp tục tác vụ kích hoạt. Retry kỹ thuật giữ nguyên kết quả phê duyệt; lần gửi chưa rõ kết quả phải được đối soát theo request ID trước khi thực hiện lại.
+Tác vụ BLOCKED chỉ tiếp tục qua thao tác có quyền, checks mới và version hồ sơ hiện hành. Retry kỹ thuật giữ nguyên kết quả duyệt; yêu cầu chưa rõ kết quả phải đối soát theo request ID.
 
 `force-reject` là thao tác riêng của ARM, yêu cầu lý do và không phụ thuộc người đang được phân công hồ sơ. Thao tác áp dụng cho hồ sơ hiện hành, gồm hồ sơ đã APPROVED; từ chối trên REJECTED/CANCELLED/REPLACED. Core chuyển hồ sơ sang REJECTED, ghi kết luận từ chối cho hai bước OCR/eKYC và audit trong cùng transaction. Với hồ sơ Sale đang ACTIVE và liên kết đại lý chỉ có role SALE_MEMBER, khôi phục DRAFT hoặc REQUEST_UPDATE theo trạng thái trước kích hoạt đã lưu; thiếu trạng thái hợp lệ thì chuyển REQUEST_UPDATE. Hồ sơ Sale không ACTIVE hoặc có role quản lý không bị đổi trạng thái bởi bước khôi phục này. Khi tính năng force-reject bị tắt, endpoint từ chối thực hiện.
 
@@ -225,7 +223,11 @@ Quota là số Sale tuyệt đối của từng hạng, không phải phần tr�
 
 `a`, `b` là trọng số phần trăm không âm, tổng bằng 100. API nhận `previousCycleRatio` và `currentCycleRatio` trong khoảng 0–1, tối đa 4 chữ số thập phân, tổng bằng 1; quy đổi sang trọng số phần trăm khi lưu/tính, không giới hạn thành số nguyên. Khi nguồn đã đồng bộ đầy đủ và Sale không phát sinh giao dịch quý trước, doanh số quý trước bằng 0; nguồn thiếu/chưa hoàn tất phải trả trạng thái thiếu dữ liệu, không quy thành 0. Thứ tự xét hạng là điểm giảm dần; thứ tự hiển thị ổn định dùng khóa Sale làm khóa phụ sau tiêu chí sắp xếp do người dùng chọn. Khóa phụ không thay đổi kết quả đồng hạng.
 
-Quý đang diễn ra chỉ hiển thị doanh số, số giao dịch và điểm tạm tính; trường hạng chưa có giá trị công bố. Xếp hạng chính thức chỉ được công bố sau khi quý kết thúc, đạt mốc chốt và bằng chứng nguồn theo mục 8.3.4; hoàn tất job tổng hợp không đồng nghĩa nguồn đã đầy đủ. Kết quả đã công bố được đóng băng; quy tắc xử lý dữ liệu đến muộn và chứng nhận tại mục 8.3.4.
+Quý đang diễn ra chỉ có số liệu tạm tính. Công bố theo toàn quý trên tập Sale đã snapshot, sau khi nguồn được đối soát và cấu hình bao phủ mọi nhóm có Sale; nhóm rỗng không chặn công bố. Điều kiện chốt dữ liệu tại mục 8.3.4.
+
+Kết quả đã công bố đóng băng: không sửa hạng, điểm, doanh số hoặc công bố lại. Dữ liệu đến muộn được lưu ở nguồn và báo cáo chênh lệch, có thể ảnh hưởng điểm kỳ chưa công bố. API/UI/export phân biệt Q−1 đã công bố với Q−1 hiệu chỉnh dùng tính điểm Q.
+
+Badge quý Q chỉ lấy hạng đã công bố của Q−1. Chưa có kết quả thì ẩn badge/nút tải chứng nhận và hiển thị chờ cập nhật; không dùng hạng Q−2 thay thế. Chứng nhận gắn kết quả công bố và phiên bản template; file hết hạn được tạo lại từ cùng kết quả.
 
 Kết quả công bố lưu nhóm xét hạng cùng snapshot dữ liệu và cấu hình dùng tính điểm. Badge/chứng nhận phải tham chiếu đúng kết quả này; không tự chọn một bản ghi khi một Sale có kết quả ở nhiều nhóm. Quy tắc xử lý Sale chuyển đối tượng trong quý được theo dõi tập trung tại DEC-12.
 
@@ -261,11 +263,11 @@ Phạm vi CMND/hộ chiếu và liên kết hai hồ sơ CCCD/mã nhân viên c�
 
 Chỉ công khai bản ghi đang áp dụng có CCCD hoặc số điện thoại phù hợp; bản ghi chỉ có mã nhân viên không đủ điều kiện tra cứu công khai. API market phải trả đúng contract cho các trường hợp tìm thấy/không tìm thấy hoặc dữ liệu không được công khai, không lộ lịch sử nội bộ.
 
-Gỡ cấm không tự kích hoạt lại tài khoản. Watchlist chỉ đồng bộ tập kiểm soát hiện hành và trạng thái chặn do Watchlist sở hữu; không ghi trạng thái vòng đời hoặc cấp role. Khi không còn điều kiện chặn, Watchlist xóa trạng thái chặn của mình nhưng không mở tài khoản. Các lệnh legacy `DISABLE/ENABLE/NONE` phải được ánh xạ sang hợp đồng mục 6.5.3; không được dùng `ENABLE` để ghi đè trạng thái tài khoản chung.
+Gỡ cấm không tự kích hoạt lại tài khoản. Watchlist chỉ cập nhật phần kiểm soát của mình tại Profile theo mục 6.5.3; các lệnh legacy phải chuyển sang contract này.
 
-Profile tính trạng thái tài khoản hiệu lực và thu hồi phiên theo hợp đồng mục 6.5.3. Mỗi dịch vụ gọi Watchlist phải kiểm quyết định tại đúng thao tác nghiệp vụ. INT-05 nghiệm thu cả hai nguồn Core/Watchlist đến trạng thái có hiệu lực tại Profile.
+Core kiểm Watchlist tại các thao tác trong mục 6.5.2. Profile thực thi trạng thái hiệu lực theo mục 6.5.3.
 
-Tại điểm kiểm soát, caller giới hạn mỗi lần gọi Watchlist ở 500 ms, thử lại tối đa một lần cho lỗi kết nối/timeout với tổng ngân sách 1,2 giây; không giữ transaction nghiệp vụ trong thời gian chờ. Phản hồi không xác định được xử lý theo DEC-07 tại mục 8.7, không dùng kết quả cho phép cũ để cấp thêm quyền.
+Checks Watchlist có timeout và retry hữu hạn cho lỗi kết nối; không giữ khóa DB khi gọi. Quyết định không xác định dừng thao tác tăng quyền theo mục 6.5.2.
 
 ### 3.3.4 Hạn chế bán tự động
 
@@ -273,13 +275,13 @@ Mốc tham chiếu ưu tiên ngày cọc hợp lệ gần nhất. Khi không có
 
 Scanner đọc đầy đủ dữ liệu, lập danh sách ứng viên `PENDING`, kiểm chất lượng nguồn và tỷ lệ bất thường trước khi chuyển `ACTIVE` và ghi outbox. Tỷ lệ bằng số tài khoản dự kiến mới bị hạn chế chia cho số tài khoản hợp lệ đã được đánh giá trong cùng lượt quét; tài khoản đã bị hạn chế không tính lại vào tử số. Nếu thiếu trang, thiếu dữ liệu bắt buộc hoặc mẫu số bằng 0, lượt quét không được phát quyết định.
 
-`minSample` áp dụng trên tập tài khoản hợp lệ của toàn lượt quét hạn chế bán (`RESTRICTED`) trong ngày, gồm các audience của lượt đó; đếm mỗi username một lần sau khi nhận đủ trang. Không tính ngưỡng riêng từng page/batch hay từng audience, không gộp thêm tài khoản ngoài phạm vi để đạt mẫu tối thiểu. Nếu sau này tách run theo audience, đó là thay đổi phạm vi guard cần thẩm định lại; tập dưới ngưỡng tiếp tục chỉ có báo cáo.
+`minSample` đếm username duy nhất trên toàn run RESTRICTED sau khi nhận đủ trang, gồm mọi audience trong run; không tính theo page/audience hoặc thêm tài khoản ngoài phạm vi để đủ mẫu.
 
 Gia hạn theo `graceUntil`: trước ngày này bỏ qua áp hạn chế, từ ngày này đánh giá lại trên dữ kiện mới nhất. Số lượt quét không làm đổi thời lượng gia hạn. Thời lượng và điều kiện cấp lại thuộc DEC-03.
 
-Với tập đánh giá từ 1.000 tài khoản trở lên, tỷ lệ vượt 5% chuyển lượt quét sang chờ kiểm tra, không phát lệnh. Với tập nhỏ hơn 1.000, scanner chỉ lập báo cáo và danh sách dự kiến, không tự vượt qua guard. Rollout đầu tiên có tồn đọng được xử lý bằng đợt đối soát có phê duyệt: BO duyệt danh sách, vận hành duyệt thời điểm và giới hạn số lượng; quyền thực thi gắn với mã lượt quét, phiên bản dữ liệu, danh sách và thời hạn. Thay đổi đầu vào làm mất hiệu lực phê duyệt. Đây là ngoại lệ một lần, không thay ngưỡng 5% toàn hệ thống.
+Run có ít nhất 1.000 tài khoản và tỷ lệ ứng viên mới không quá 5% được xét áp dụng. Run dưới minSample hoặc vượt tỷ lệ chỉ báo cáo và chờ xét duyệt; dry-run không phát quyết định.
 
-Ngoài rollout, mỗi run vượt guard hoặc dưới minSample có thể được đề nghị xét duyệt riêng sau đối soát nguồn. BO duyệt danh sách/phạm vi, vận hành duyệt cửa sổ và giới hạn áp dụng; lưu người duyệt, lý do, snapshot, config version và thời hạn. Worker kiểm lại điều kiện hiện hành trước áp dụng, không phát lệnh cho người đã có giao dịch/gia hạn hoặc không còn đủ điều kiện. Đầu vào đổi phải tính lại và duyệt lại, không tái dùng phê duyệt ngày trước; không được duyệt bỏ qua dữ liệu thiếu/sai hoặc thiếu ngưỡng. Run không có phê duyệt còn hiệu lực tiếp tục chỉ báo cáo. OPS-01 phải chỉ ra tỷ lệ run bị guard chặn và quy mô population để BO chọn minSample/guard phù hợp, không hạ ngưỡng tự động để chạy được.
+Ngoại lệ rollout hoặc run bị guard chặn phải có BO duyệt danh sách và vận hành duyệt cửa sổ/giới hạn áp dụng. Phê duyệt gắn run, snapshot, config version và thời hạn. Đầu vào đổi phải tính/duyệt lại; worker kiểm điều kiện hiện hành trước áp dụng. Không duyệt bỏ qua nguồn thiếu/sai hoặc thiếu ngưỡng; không tự hạ guard để chạy được.
 
 ## 3.4 Theo dõi chu kỳ bán hàng
 
@@ -325,7 +327,7 @@ Mọi giao dịch cùng ngày đạt thử thách thuộc kỳ thử thách, kh�
 
 ### 3.4.4 Đổi cấu hình và dữ liệu nguồn
 
-- Cấu hình mới chỉ được lưu với ngày hiệu lực tương lai, số tháng/chỉ tiêu dương, đối tượng/ngày không trùng; kiểm xung đột bằng `expectedUpdatedAt`.
+- Cấu hình mới chỉ được lưu với ngày hiệu lực tương lai, số tháng/chỉ tiêu dương, đối tượng/ngày không trùng; kiểm xung đột bằng `expectedVersion`.
 - `IMMEDIATE`: cắt kỳ đang chạy tại D−1 và mở kỳ chính thức mới tại D, áp dụng cả Sale đang thử thách. Kỳ bị cắt được lưu với lý do đổi cấu hình, số giao dịch đến D−1 và trạng thái đạt tại thời điểm cắt; không coi là hết hạn tự nhiên và không sinh thử thách/đề xuất chấm dứt từ phần kỳ bị cắt. Nếu D trùng ngày đầu kỳ thì không tạo kỳ rỗng. Giao dịch trước D không mang sang kỳ mới. Ngoại lệ đối với Sale đã `TERMINATION_PROPOSED` được quản lý riêng tại DEC-04.
 - `SEQUENTIAL`: hoàn thành kỳ hiện tại rồi chọn cấu hình hiệu lực cho kỳ kế tiếp.
 - Giao dịch hủy/đến muộn có thể làm dựng lại lịch sử; giao dịch có ngày ký cọc (`depositDate`) sau khi thử thách đã hết không tự mở lại.
@@ -402,12 +404,12 @@ Các chỉ tiêu định lượng dưới đây là **mục tiêu thiết kế s
 | NFR-10 | Recovery | RTO ≤ 2 giờ; RPO dữ liệu DB ≤ 5 phút; đối soát tác động bên ngoài trước mở sender | Diễn tập mục 12.3, đo cả thời gian đối soát trong RTO |
 | NFR-11 | Availability | API Core/Ranking/Cycle ≥ 99,9%; Watchlist checks ≥ 99,95% theo tháng | Đo tại ingress dịch vụ, tính cả lỗi phụ thuộc làm request thất bại; tách lỗi nghiệp vụ 4xx |
 | NFR-12 | Latency nghiệp vụ | Core đọc/ghi p95 ≤ 500 ms; Ranking/Cycle tra cứu p95 ≤ 1 giây, p99 ≤ 2 giây | Tải mục 11; loại thao tác file/batch và đo riêng thời gian chờ OCR/eKYC |
-| NFR-13 | Export | Ranking và chu kỳ: tối đa 50.000 Sale, hoàn tất ≤ 120 giây với 2 lượt xuất đồng thời; phạm vi tối đa 4 quý chỉ áp dụng ranking | Đo từ nhận yêu cầu đến tạo/stream xong file; giữ giới hạn heap và phân quyền |
-| NFR-14 | Đồng bộ tác động | p95 từ commit đến đích xác nhận ≤ 30 giây; cảnh báo tồn đọng theo ngưỡng 2/5 phút | Metric và cảnh báo mục 13.2.1 |
+| NFR-13 | Export | Ranking và chu kỳ: tối đa 50.000 Sale, hoàn tất ≤ 120 giây với 2 lượt xuất đồng thời; phạm vi tối đa 4 quý chỉ áp dụng ranking | Đo từ chấp nhận job đến file sẵn sàng tải, gồm thời gian chờ hàng đợi; không tính thời gian người dùng tải file |
+| NFR-14 | Đồng bộ tác động | p95 từ commit đến đích xác nhận ≤ 30 giây; cảnh báo tồn đọng theo cấu hình vận hành | Metric và cảnh báo mục 13.2.1 |
 | NFR-15 | Chu kỳ và thông báo | Tính lại sự kiện p95 ≤ 60 giây sau khi nhận đủ dữ liệu; 50.000 thông báo cùng hạn được gửi trong 15 phút | Test peak, giới hạn kênh và không gửi cho Sale inactive |
-| NFR-16 | Kiểm tra overlap | p95 truy vấn ≤ 50 ms; p95 giữ khóa ≤ 200 ms trên tập kiểm thử mục 11 | EXPLAIN ANALYZE và test cạnh tranh; timeout chờ khóa 2 giây |
+| NFR-16 | Kiểm tra overlap | p95 truy vấn ≤ 50 ms; p95 giữ khóa ≤ 200 ms trên tập kiểm thử mục 11 | EXPLAIN ANALYZE và test cạnh tranh |
 
-Ranking query có statement timeout 10 giây để bảo vệ DB; đây là giới hạn dừng truy vấn, không phải mục tiêu latency. Tỷ lệ đáp ứng NFR được đo trong cửa sổ tải ổn định tối thiểu 60 phút và một lượt peak cuối kỳ. OPS-01 ghi kết quả đối chiếu các mục tiêu trên cùng cấu hình tài nguyên đã sử dụng. RTO là giới hạn khôi phục khi thảm họa, không phải thời gian ngừng được miễn khỏi availability; sự cố DR vẫn tiêu thụ error budget và có thể làm vi phạm SLO tháng.
+Tỷ lệ đáp ứng NFR được đo trong cửa sổ tải ổn định tối thiểu 60 phút và một lượt peak cuối kỳ. OPS-01 ghi kết quả đối chiếu các mục tiêu trên cùng cấu hình tài nguyên đã sử dụng. RTO là giới hạn khôi phục khi thảm họa, không phải thời gian ngừng được miễn khỏi availability; sự cố DR vẫn tiêu thụ error budget và có thể làm vi phạm SLO tháng.
 
 # 5. Technology Stack & Justification
 
@@ -436,7 +438,7 @@ Các quyết định công nghệ ưu tiên tính nhất quán nghiệp vụ, kh
 
 Các cơ chế khác nhau đáp ứng vòng đời công việc khác nhau. Vận hành thống nhất bộ trường quan sát `jobId`, owner, lease, checkpoint, số lần thử và kết quả; runbook xử lý mất lease, công việc treo và phát lặp theo cùng nguyên tắc. Không bổ sung cơ chế khóa thứ tư cho một lịch chạy tương đương.
 
-Scanner dùng một bản ghi điều phối DB chung cho phạm vi có thể ghi trùng, tham chiếu run đang được phép thực thi và epoch tăng dần khi tiếp quản. Các run có population giao nhau phải dùng cùng phạm vi khóa. Trong từng transaction ghi ứng viên hoặc ACTIVE/outbox, worker khóa bản ghi điều phối, kiểm run/epoch/owner, lease theo thời gian DB và trạng thái run; sai thì rollback. Tiếp quản cũng khóa bản ghi đó trước đổi epoch, nên worker cũ tỉnh lại không ghi được sau worker mới. Kiểm Redis hoặc kiểm lease ngoài transaction không thay bước này. Transaction ghi có timeout ngắn, không gọi mạng khi giữ khóa; checkpoint và outbox commit cùng kết quả batch.
+Các run có population giao nhau dùng chung quyền điều phối DB với run/owner, lease và epoch. Mỗi transaction ghi ứng viên hoặc ACTIVE/outbox khóa và kiểm quyền này; tiếp quản cũng khóa trước tăng epoch. Worker cũ không ghi được sau tiếp quản. Kết quả batch, checkpoint và outbox commit cùng nhau; không gọi mạng khi giữ khóa.
 
 # 6. Integration Architecture
 
@@ -445,7 +447,7 @@ Scanner dùng một bản ghi điều phối DB chung cho phạm vi có thể gh
 | Nguồn → đích | Mục đích | Giao thức / chế độ | Dữ liệu / ràng buộc |
 | --- | --- | --- | --- |
 | Agent BFF → Core | Hồ sơ, đại lý, vùng, liên minh, pháp nhân | REST/HTTPS, sync | Actor/role, organization, resource IDs; gate BFF |
-| Agent BFF → Analytics | Ranking/cycle/config/export | REST/HTTPS, sync | ServiceResponse hoặc XLSX; scope tin cậy |
+| Agent BFF → Analytics | Ranking/cycle/config/export | REST/HTTPS; export bất đồng bộ | JSON; export trả jobId, file tải qua File Service |
 | Agent BFF / caller được cấp → Watchlist | CRUD/check/lookup | REST/HTTPS, sync | Tách realm Internal/Check/Market và CIDR |
 | Core → Watchlist | Checks tại các điểm kiểm soát mục 6.5.2 | REST/HTTPS, service principal trong realm Check | Core kiểm quyền người thao tác, Watchlist xác thực caller; liên kết audit bằng check request ID |
 | Core → Profile | Vòng đời, cấp/thu hồi quyền Sale và yêu cầu tái kích hoạt | Outbox → API S2S, đối soát receipt | INT-05; revision riêng Core, không sửa phần kiểm soát Watchlist; binding giao thức tại L3-INT |
@@ -459,7 +461,14 @@ Scanner dùng một bản ghi điều phối DB chung cho phạm vi có thể gh
 | Consumer Quỹ căn → Analytics | Đọc điều kiện chu kỳ khi ra quyết định | API S2S, đọc kết quả hiện hành | Result version, mốc nguồn và trạng thái sẵn sàng theo 6.6.2; không dùng bản sao cũ để cấp quyền |
 | Analytics → Notification | Nhắc chu kỳ/kết thúc | Dispatch ngoài transaction | INT-03: notification ID, receipt và delivery status |
 
-Các API export ranking/chu kỳ đang được mô tả trả XLSX trực tiếp; dòng File Service không mặc định đổi chúng thành job trả link. L3-API cùng L3-OPS phải xác nhận cách giao file và ngân sách timeout xuyên gateway/BFF/service trước BASELINE. Giữ đồng bộ cần bằng chứng đáp ứng NFR-13 và giới hạn tài nguyên; nếu chọn job → File Service → link tải thì phải cập nhật đồng bộ API, trạng thái job, quyền tải, retention, cách đo NFR và kế hoạch tương thích. Cả hai phương án đều ghi lịch sử xuất theo mục 7.4.3.
+Ranking và chu kỳ xuất file bất đồng bộ:
+
+1. API kiểm quyền, bộ lọc và hạn mức; lưu job bền vững rồi trả `202 Accepted` cùng `jobId`. Request key chống tạo job trùng.
+2. Worker đọc dữ liệu theo phạm vi đã được cấp, tạo XLSX và lưu vào File Service. Tập dữ liệu/mốc nguồn và dấu TRUNCATED khi cắt bớt kết quả được ghi cùng job.
+3. API tra cứu job kiểm người yêu cầu và scope hiện hành, trả trạng thái đang xử lý, hoàn tất hoặc lỗi. Chỉ cấp link tải có thời hạn khi file sẵn sàng và người tải còn quyền trên toàn phạm vi file; file không được mở rộng phạm vi so với yêu cầu gốc.
+4. Lưu lịch sử người xuất, bộ lọc, phạm vi, thời điểm và kết quả. File hết hạn phải tạo yêu cầu xuất mới.
+
+Hạn mức bản ghi và thời gian hoàn tất theo NFR-06/13. Quá hạn mức tiếp nhận trả 429 trước tạo job; retry lỗi xử lý giữ cùng jobId. Khi quyền bị thu hồi, không cấp link tải mới. Link đã cấp chỉ có hiệu lực trong thời hạn của nó.
 
 ## 6.2 API nền tảng Cobroker
 
@@ -500,9 +509,9 @@ Base `C=/internal/v1/cobrokers/onboarding`, `A=/internal/v1/agencies`, `R=/inter
 
 Các biến thể `requestId` trên endpoint nhân sự/chi nhánh thao tác snapshot yêu cầu cập nhật, khác cập nhật live. Params/body của từng chế độ được đặc tả riêng trong L3-API; validator phân biệt snapshot và live trước khi ghi dữ liệu.
 
-Các API onboarding theo `accountId` resolve `accountId → cobrokerProfileId → registration hiện hành`; mỗi hồ sơ Sale có tối đa một lần hiện hành, loại `REJECTED/CANCELLED/REPLACED`. Riêng submit chỉ nhận trạng thái được phép nộp trong mục 3.1.1. Mutation gắn `registrationId` và expected version của lần người dùng đang xem; nếu lần hiện hành đã thay, trả conflict, không tự chuyển yêu cầu cũ sang lần mới. Khóa chống lặp cũng gắn lần đăng ký đã resolve. L3-API bổ sung trường ràng buộc này theo kế hoạch nâng caller. Với `C/ocr`, `C/ocr/reconcile`, `C/identity-verification/check` và các thao tác ghi `C/ekyc/*` không có định danh trên path, body hoặc metadata của multipart mang `registrationId` và expected version; service resolve chủ sở hữu từ actor, không tin account do client tự khai. Session tạo ra được gắn cố định với registration; poll chỉ đọc theo session và kiểm ownership, không bắt client gửi version cho thao tác đọc. Callback/worker đối chiếu session với lần đăng ký và version đầu vào đã lưu; không áp kết quả cũ sang lần hiện hành mới.
+Onboarding theo accountId resolve tới hồ sơ và registration hiện hành, loại REJECTED/CANCELLED/REPLACED. Mutation phải gắn registrationId và expected version của lần người dùng đang xem; khác lần/version trả conflict. Các API OCR/eKYC không có định danh trên path nhận chúng qua body/metadata multipart. Session gắn cố định với registration; poll kiểm ownership, callback/worker chỉ áp kết quả cho đúng lần và version đầu vào.
 
-`CANCELLED/REPLACED` là kết quả của luồng thay thế hồ sơ, không suy ra một endpoint hủy độc lập cho người dùng. Việc đóng lần cũ và tạo lần mới cùng transaction, giữ lịch sử và liên kết thay thế. `C/ocr/session/{sessionId}/status` resolve session về hồ sơ/lần đăng ký trước kiểm quyền từ actor; session sai chủ sở hữu không trả kết quả dù người gọi biết session ID. Kết quả OCR của lần cũ không được áp sang lần mới.
+Đóng lần cũ và tạo lần đăng ký thay thế cùng transaction, giữ liên kết lịch sử. Session sai chủ sở hữu không trả dữ liệu; kết quả xác minh cũ không được áp sang lần mới.
 
 ## 6.3 Hợp đồng tích hợp xác minh danh tính
 
@@ -521,26 +530,24 @@ Khi timeout hoặc mất kết nối, Core giữ hồ sơ và tham chiếu yêu 
 
 ### 6.3.1 Thử lại và xử lý sự cố kéo dài
 
-Core chỉ tự thử lại thao tác **tra cứu kết quả không làm thay đổi dữ liệu**: tối đa 3 lần sau lần gọi đầu, chờ lần lượt 2, 5 và 10 giây kèm jitter tối đa 20%. Mỗi lần gọi có timeout 5 giây, toàn bộ lượt tra cứu tối đa 45 giây; công việc chạy nền để không giữ request hoặc khóa DB. Kết quả `đang xử lý` là phản hồi hợp lệ, không được tính như lỗi hay kích hoạt vòng retry nhanh.
+- Tra cứu kết quả chạy nền, có timeout, backoff và giới hạn retry; không giữ request hoặc khóa DB. Phản hồi đang xử lý không tính là lỗi.
+- Không retry lỗi đầu vào/quyền. Mutation chưa rõ kết quả phải đối soát; chỉ gửi lại khi đích hỗ trợ idempotency hoặc xác nhận chưa tiếp nhận.
+- Circuit breaker ngắt gọi khi dependency lỗi diện rộng. Hết ngân sách retry thì giữ hồ sơ, cảnh báo và chuyển xử lý tích hợp; không tự duyệt do timeout.
 
-Lỗi đầu vào/quyền không được retry. Yêu cầu khởi tạo bị timeout và chưa xác định kết quả không được gửi lại tự động; Core đối soát theo mã tương quan của yêu cầu. Chỉ phát lại mutation khi hợp đồng bên ngoài xác nhận hỗ trợ idempotency với cùng khóa hoặc xác nhận yêu cầu cũ chưa được tiếp nhận.
-
-Hết ngân sách thử lại, hồ sơ chuyển vào danh sách cần xử lý tích hợp, giữ nguyên dữ liệu và trạng thái nghiệp vụ. Sau 30 phút chưa có kết quả, Core cảnh báo đầu mối vận hành. Nếu tỷ lệ lỗi/timeout ≥ 50% trên ít nhất 20 lượt gọi trong 60 giây, circuit breaker tạm ngừng gọi 60 giây và chỉ cho một lượt thăm dò khi mở lại. Các ngưỡng này là cấu hình thiết kế khởi tạo cần kiểm chứng trong L3-IDV.
-
-Khi dịch vụ gián đoạn diện rộng, vận hành ghi nhận sự cố, tạm dừng phát yêu cầu mới và giao danh sách hồ sơ ảnh hưởng cho bộ phận xử lý. Người được cấp quyền tra cứu, đối soát, yêu cầu bổ sung hoặc khởi động lại bước xác minh sau khi dịch vụ phục hồi; mọi thao tác có lý do và lịch sử. Xử lý thủ công không có nghĩa bỏ qua điều kiện xác minh hoặc tự duyệt hồ sơ do timeout.
+Thông số retry/circuit breaker và ngưỡng cảnh báo nằm trong cấu hình Core và runbook vận hành.
 
 ## 6.4 API xếp hạng Sale
 
 ### 6.4.1 Danh mục API
 
-Các path dưới đây là API analytics nội bộ, không phải URL FE. JSON dùng `ServiceResponse`; export trả file XLSX.
+Các path dưới đây là API analytics nội bộ, không phải URL FE. JSON dùng `ServiceResponse`; export theo luồng bất đồng bộ tại mục 6.1.
 
 | Method | Path | Mục đích |
 | --- | --- | --- |
 | POST | `/v1/sale-ranking/board/search` | Bảng xếp hạng |
 | POST | `/v1/sale-ranking/board/filter-options` | Danh mục lọc theo scope |
 | GET | `/v1/sale-ranking/board/sales/{username}` | Một Sale theo danh sách quý |
-| POST | `/v1/sale-ranking/board/export` | Xuất cùng bộ lọc, quyền riêng |
+| POST | `/v1/sale-ranking/board/export` | Tạo job xuất XLSX theo bộ lọc và quyền; trả 202 + jobId |
 | POST | `/v1/sale-ranking/board/visualize` | So sánh/biểu đồ |
 | GET | `/v1/sale-ranking/board/visualize/sale/{username}` | Chi tiết nguồn số liệu một Sale |
 | GET / POST | `/v1/sale-ranking/configs` | Danh sách / lưu cấu hình |
@@ -567,7 +574,7 @@ Client chọn quý từ danh mục API trả về. Kỳ ngoài phạm vi hoặc 
 
 ### 6.4.3 Badge và chứng nhận cá nhân
 
-Badge chỉ hiển thị hạng đã công bố của quý liền trước. Khi sang quý mới mà kết quả chưa được công bố, giao diện hiển thị chờ cập nhật và ẩn badge/nút tải theo mục 8.3.4. Chỉ Sale có hạng chính thức được sinh và tải chứng nhận.
+Quy tắc chọn kỳ và kết quả badge/chứng nhận tại mục 3.2.2.
 
 Luồng sinh chứng nhận tách khỏi request bảng xếp hạng:
 
@@ -618,13 +625,13 @@ Watchlist đọc `GET /internal/v1/sale-activity-facts?cursor&size` từ Analyti
 
 Analytics cung cấp dữ kiện nguồn có phiên bản, không quyết định điều kiện hạn chế bán. Watchlist tính giao dịch hợp lệ, ngày cọc gần nhất, ngưỡng, gia hạn và danh sách ứng viên theo nghiệp vụ của mình. Profile cung cấp tài khoản, đối tượng, trạng thái, mốc tạo/kích hoạt và dữ liệu cần để liên kết quyết định cấm/hạn chế; Watchlist lấy theo lô, không gọi từng Sale.
 
-Lượt quét bắt đầu từ tập tài khoản hợp lệ của Profile để không bỏ sót Sale chưa có giao dịch. Watchlist ghép dữ kiện Analytics theo username và ghi mốc đồng bộ của cả hai nguồn. Thiếu tài khoản hoặc thiếu dữ kiện bắt buộc làm lượt quét không đủ điều kiện tự áp dụng; không thay null bằng ngày hiện tại. Snapshot/cursor hết hạn phải đọc lại lượt quét, không ghép các trang khác phiên bản. API hỗ trợ lấy thay đổi từ watermark, gồm cả cập nhật/hủy và dấu xóa; Watchlist chỉ dùng tập tăng dần sau khi đã đối soát baseline đầy đủ. Mất khoảng dữ liệu hoặc hết hạn watermark buộc nạp lại baseline. INT-01 nghiệm thu đủ trang, trang lỗi, cập nhật đồng thời và trường hợp không có giao dịch.
+Population lấy từ Profile, gồm cả Sale chưa có giao dịch. Ghép facts Analytics theo username; lưu watermark của hai nguồn. Chỉ xét ratio sau khi nhận đủ trang và nguồn đạt độ mới yêu cầu; lỗi/thiếu dữ liệu dừng run. Grace và guard áp dụng mục 3.3.4.
 
-INT-01 phải chốt mốc dữ liệu cần có cho ngày quét và độ trễ nguồn được chấp nhận; snapshot nhất quán chưa chứng minh dữ liệu đủ mới. Scanner kiểm các điều kiện này trước áp dụng; nguồn chưa đạt chỉ được lập báo cáo chờ dữ liệu. Lịch 02:00 là thời điểm kích hoạt, không thay điều kiện sẵn sàng. Facts lấy từ dữ kiện giao dịch nguồn của Analytics, không phụ thuộc kết quả ranking aggregation; OPS-01 kiểm tải đồng thời hai job trước quyết định lệch lịch.
+INT-01 quy định mốc dữ liệu và độ trễ nguồn cho ngày quét. Scanner đọc facts giao dịch, không phụ thuộc kết quả ranking; chỉ chạy khi nguồn sẵn sàng. OPS-01 kiểm tải đồng thời các job.
 
 ### 6.5.2 Trách nhiệm kiểm soát tại thao tác nghiệp vụ
 
-Core kiểm quyền người thao tác trên hồ sơ rồi gọi Watchlist bằng service principal riêng trong realm Check. Watchlist cấp principal này quyền `checks/statuses`, không cấp CRUD, reveal hoặc export; checks chỉ trả quyết định cần cho thao tác. Không truyền lại actor token có audience Core và không cần phát token thay mặt người dùng cho lời gọi đọc này. Core lưu actor, action, hồ sơ/version và check request ID trong audit; Watchlist lưu caller, check request ID, thời điểm và kết quả để truy vết cùng yêu cầu. Header người dùng không phải nguồn quyền tại realm Check.
+Core kiểm quyền người thao tác rồi gọi Watchlist bằng principal riêng trong realm Check, chỉ có quyền checks/statuses. Không chuyển actor token audience Core. Audit hai dịch vụ nối bằng check request ID; Core giữ actor/action/hồ sơ/version, Watchlist giữ caller và kết quả.
 
 | Điểm kiểm soát | Hành vi |
 | --- | --- |
@@ -638,17 +645,17 @@ Core kiểm quyền người thao tác trên hồ sơ rồi gọi Watchlist bằ
 
 BFF có thể kiểm sớm để hiển thị nhưng service thực hiện mutation vẫn kiểm tại điểm kiểm soát. Nộp hồ sơ và thao tác tăng quyền/kích hoạt/đổi định danh dừng khi checks không xác định; lưu nháp/đọc theo quyền hiện có vẫn được thực hiện.
 
-Core đọc hồ sơ, version và đầu vào kiểm soát, gọi checks ngoài transaction giữ khóa với ngân sách tại mục 3.3, rồi mở transaction ghi để kiểm lại trạng thái/version/định danh trước mutation. Nếu đầu vào đã đổi, bỏ kết quả kiểm và thực hiện lại từ dữ liệu mới; timeout/không xác định xử lý theo DEC-07. Audit liên kết yêu cầu kiểm với thao tác và quyết định nhận được.
+Core đọc đầu vào/version, gọi checks ngoài transaction giữ khóa, rồi kiểm lại dữ liệu trong transaction ghi. Đầu vào đổi thì kiểm lại từ đầu; kết quả checks không được tái dùng cho thao tác khác.
 
-Kết quả checks chỉ phục vụ một lượt thao tác với cùng đầu vào, không cache thành giấy phép cho bước sau. Giữa checks và commit không có transaction liên dịch vụ: cửa sổ trước khi Profile nhận quyết định Watchlist vẫn tồn tại. Sau khi Profile đã nhận chặn, yêu cầu kích hoạt Core đến muộn không được mở tài khoản theo mục 6.5.3. INT-05 nghiệm thu độ trễ delivery và cả hai thứ tự nhận ban/activate; Profile áp điều kiện hoạt động tại mục 6.5.3 trong mọi thứ tự nhận.
+Cửa sổ trước khi Profile nhận quyết định Watchlist được kiểm soát bằng delivery và đối soát. Sau khi đã nhận chặn, lệnh kích hoạt đến muộn phải bị giữ theo mục 6.5.3; INT-05 kiểm cả hai thứ tự nhận.
 
 ### 6.5.3 Core/Watchlist → Profile: quyền ghi và trạng thái hiệu lực
 
 Profile giữ riêng trạng thái vòng đời/quyền Sale do Core quản lý, tập kiểm soát do Watchlist quản lý và các điều kiện khóa khác do Profile/IAM quản lý. Mỗi writer chỉ cập nhật phần của mình qua contract có quyền riêng. Tài khoản chỉ hoạt động khi vòng đời cho phép, không có kiểm soát chặn, không có khóa khác và không còn yêu cầu tái kích hoạt; cấp role không vượt qua điều kiện này.
 
-Watchlist tăng và lưu thế hệ chặn theo tài khoản mỗi khi phát sinh quyết định chặn mới; snapshot luôn mang thế hệ gần nhất kể cả sau gỡ chặn. Khi nhận thế hệ mới, Profile ghi yêu cầu tái kích hoạt cùng thế hệ đó trong cùng transaction cập nhật kiểm soát. Vì vậy, gộp outbox ban rồi release trước khi gửi cũng không làm mất yêu cầu tái kích hoạt. Gỡ kiểm soát không tự xóa yêu cầu này. Core chỉ được yêu cầu xóa nó bằng thao tác tái kích hoạt có quyền, sau checks mới, kèm revision kiểm soát và thế hệ chặn vừa đọc từ Profile. Profile kiểm chúng còn khớp và không có chặn trong cùng transaction; khác version thì từ chối, không biến lệnh cũ thành yêu cầu mở lại mới. Kích hoạt thông thường không được xóa yêu cầu tái kích hoạt. Yêu cầu mở lại tham chiếu revision Watchlist mới nhất từ checks; nếu Profile chưa áp tới revision đó thì giữ chờ đồng bộ, không mở dựa trên snapshot cũ. Chính sách không tự tiếp tục sau gỡ chặn thuộc DEC-07; tên field cụ thể thuộc L3-API.
+Mỗi quyết định chặn mới tăng thế hệ chặn của tài khoản; snapshot sau gỡ vẫn giữ thế hệ đó. Profile nhận thế hệ mới thì ghi yêu cầu tái kích hoạt cùng transaction. Gỡ chặn hoặc gộp ban/release không xóa yêu cầu này. Chỉ thao tác tái kích hoạt có quyền, checks mới và khớp revision/thế hệ hiện hành được xóa yêu cầu. Profile chưa áp tới revision từ checks thì giữ chờ; lệnh cũ không được mở tài khoản.
 
-Core gửi yêu cầu vòng đời/quyền qua outbox sau commit, có username bất biến, mã yêu cầu, revision Core, registration/version và audit người khởi tạo. Watchlist gửi snapshot kiểm soát hiện hành với revision Watchlist và thế hệ chặn. Profile kiểm revision tăng dần **riêng từng nguồn trên tài khoản**, chống lặp theo request/event ID và trả receipt cùng trạng thái hiệu lực; không so số revision Core với revision Watchlist. Trạng thái chưa khởi tạo/không xác định của nguồn kiểm soát không được hiểu là không bị chặn. INT-05 bao gồm đồng bộ snapshot khởi tạo cho tài khoản mới và migration tài khoản hiện hữu, kể cả tập kiểm soát rỗng, trước khi cho phép kích hoạt. Thứ tự nhận hai nguồn không làm một writer ghi đè phần của writer còn lại.
+Core gửi vòng đời/quyền qua outbox với username, request ID, revision và registration/version. Watchlist gửi snapshot kiểm soát, revision và thế hệ chặn. Profile chống lặp và kiểm revision riêng từng nguồn, trả receipt/trạng thái hiệu lực. Tài khoản mới/cũ phải có snapshot kiểm soát khởi tạo trước kích hoạt; trạng thái không xác định không được coi là không chặn.
 
 L3-INT phải chuyển các caller legacy ghi trực tiếp trạng thái chung sang contract này trước bật luồng kích hoạt mới; Profile từ chối quyền ghi vượt phần sở hữu. Đối soát/restore phục hồi cả revision từng nguồn, yêu cầu tái kích hoạt và receipt, không chỉ kiểm cờ ACTIVE cuối cùng.
 
@@ -663,16 +670,24 @@ Base path `/v1/sales-cycle`, JSON `ServiceResponse`; đây là API analytics n�
 | POST | `/eligibility` | Contract S2S mục tiêu cho Quỹ căn: kết quả hiện hành, version và độ sẵn sàng; không dùng quyền của API tra cứu người dùng |
 | POST | `/statistics` | Danh sách có phân trang |
 | POST | `/statistics/detail` | Chi tiết kỳ/giao dịch; body `username, periodNo, cycleEligible, page, size` |
-| POST | `/export` | XLSX `sales-cycle.xlsx` |
+| POST | `/export` | Tạo job xuất XLSX `sales-cycle.xlsx`; trả 202 + jobId |
 | GET | `/filter-options` | Danh mục lọc |
 | GET | `/configs` | Danh sách cấu hình |
 | PUT | `/configs` | Tạo/cập nhật các phần tử được gửi; không xóa cấu hình bị bỏ khỏi danh sách |
 
 Statistics nhận `search, regions, departments, teams, bus, statuses, audiences, classifications, sortField, descending, page, size`; mặc định `page=1, size=20, descending=false`. Scope từ actor được giao với bộ lọc trước khi truy vấn; client không được mở rộng phạm vi bằng request body.
 
-Mỗi phần tử config request gồm `effectiveDate, audience, applyMode, officialMonths, officialTarget, trialMonths, trialTarget, reminderRules, endNoticeTime, expectedUpdatedAt`. Version thuộc từng cấu hình theo khóa `(effectiveDate, audience)`, không phải một version chung cho danh sách. Lưu batch nguyên tử: kiểm version từng phần tử, một phần tử xung đột thì rollback toàn batch; hai request sửa các khóa độc lập không xung đột chỉ vì cùng API. Reminder gồm `periodType, daysBefore, time`. Danh sách phải có phần tử, không nhận phần tử null.
+Mỗi cấu hình được xác định bởi `(effectiveDate, audience)` và có `version` số nguyên. Response trả `version`; request gửi `expectedVersion`:
 
-Request là batch tạo/cập nhật theo khóa, không phải thay toàn bộ tập cấu hình; phần tử vắng mặt được giữ nguyên. `expectedUpdatedAt` là token do DB/service trả về, client gửi nguyên giá trị, không tự sinh theo đồng hồ client. L3-API/DDL phải bảo toàn độ chính xác và bảo đảm token đổi sau mỗi cập nhật, kiểm token nguyên tử cùng ghi; nếu nền tảng không bảo đảm được thì chuyển sang version số nguyên với kế hoạch tương thích trước BASELINE.
+| Thao tác | Quy tắc |
+| --- | --- |
+| Tạo mới | `expectedVersion=0`; lưu `version=1`. Trùng khóa trả 409 |
+| Cập nhật | So khớp version và tăng 1 trong cùng transaction; version cũ trả 409 |
+| Lưu danh sách | Kiểm từng phần tử; một phần tử lỗi thì rollback toàn batch. Phần tử không gửi được giữ nguyên |
+
+Request gồm ngày hiệu lực, đối tượng, chế độ áp dụng, tháng/chỉ tiêu chính thức và thử thách, lịch nhắc, giờ thông báo kết thúc và `expectedVersion`. Hai cấu hình khác khóa được cập nhật độc lập.
+
+Migration bổ sung version cho cấu hình hiện hữu với giá trị khởi tạo 1. BFF/API chuyển đồng bộ sang contract version; timestamp chỉ phục vụ audit, không dùng kiểm xung đột.
 
 ### 6.6.2 Nguồn dữ liệu và phụ thuộc bên ngoài
 
@@ -680,13 +695,13 @@ Profile đồng bộ nhân sự và ngày bắt đầu bán vào users; Pipeline
 
 Sự kiện thay đổi user/transaction/config kích hoạt tính lại; khi chuyển PIC hoặc ngày giao dịch phải tính cả Sale cũ và mới theo thông tin trước/sau. Phiên bản nguồn cũ và message lặp không được làm dữ liệu quay lùi.
 
-INT-03 đặc tả dispatch Web/App với notification ID ổn định, người nhận, template, kỳ và receipt kênh. Chỉ ghi SENT sau xác nhận từ kênh. Thiết kế mục tiêu chọn Quỹ căn đọc trực tiếp kết quả hiện hành từ Analytics mỗi khi ra quyết định phụ thuộc chu kỳ; không dùng bản sao/cache cũ làm căn cứ cấp quyền. API S2S `POST /v1/sales-cycle/eligibility` nhận body username, trả classification, calculationStatus, roomExcluded, resultVersion, mốc dữ liệu đã tính và trạng thái đang chờ tính lại. BLOCKED/null/đang chờ tính lại/lỗi đọc không được quy thành đủ điều kiện; consumer giữ quyết định chờ hoặc xử lý theo chính sách lỗi được BO duyệt, không tự cấp quyền. Contract này được Analytics/Quỹ căn nghiệm thu qua L3-INT/L3-API trước khi dùng cho quyết định hạn mức.
+Quỹ căn đọc `POST /v1/sales-cycle/eligibility` theo username tại mỗi quyết định hạn mức. Response gồm phân loại, calculationStatus, roomExcluded, resultVersion, mốc nguồn và trạng thái chờ tính lại. Kết quả BLOCKED/null/stale hoặc lỗi đọc giữ quyết định chờ; không dùng cache cũ để cấp quyền. Consumer lưu resultVersion để đối soát.
 
-Khi nhận nguồn thay đổi, Analytics đánh dấu kết quả cần tính lại cùng transaction ghi nguồn/job; khi tính xong kiểm lại version nguồn trong transaction ghi kết quả/version và bỏ đánh dấu. Nếu có nguồn mới đến trong lúc tính thì giữ chờ tính lại; không để worker cũ xóa dấu của thay đổi mới. Độ trễ trước khi Analytics nhận được nguồn vẫn thuộc hợp đồng đồng bộ, không tuyên bố nhất quán tức thời. Quỹ căn lưu resultVersion dùng cho quyết định để đối soát; đọc API không tạo transaction phân tán với việc cấp căn. Không tự thu hồi quyền đã cấp chỉ vì lịch sử chu kỳ đổi. Nếu sau này consumer cần bản sao, phải bổ sung event thay đổi qua outbox có version/replay và nghiệm thu độ trễ trước sử dụng bản sao.
+Analytics ghi nguồn thay đổi và dấu cần tính lại nguyên tử. Khi ghi kết quả, kiểm version nguồn; nếu có thay đổi mới thì giữ dấu chờ. Độ trễ trước khi nhận nguồn thuộc hợp đồng đồng bộ. Hiệu chỉnh không tự đảo quyết định Quỹ căn đã thực hiện; contract đọc này không tạo transaction phân tán với cấp căn.
 
 ### 6.6.3 Contract lỗi và version
 
-Validation phải trả lỗi trường đầu vào; xung đột config khi `expectedUpdatedAt` cũ yêu cầu đọc lại. Kết quả BLOCKED là trạng thái nghiệp vụ thiếu đầu vào, khác lỗi HTTP và khác Sale không đạt.
+Thiếu hoặc sai kiểu `expectedVersion` trả 400; version cũ trả 409 và yêu cầu đọc lại. Kết quả BLOCKED là trạng thái nghiệp vụ thiếu đầu vào, khác lỗi HTTP và khác Sale không đạt.
 
 Thay đổi field nguồn ngày bán, enum phân loại hoặc ý nghĩa `roomExcluded` phải có test tương thích BFF và consumer; không đổi nullable thành false khi thiếu dữ liệu.
 
@@ -737,6 +752,7 @@ Chống phát lặp được xác định theo tác động, không chỉ theo H
 | --- | --- |
 | Tạo hồ sơ/đại lý/lần đăng ký/liên minh; nộp và quyết định duyệt; tạo/áp lại/gỡ/công khai/ngừng công khai kiểm soát | Request key giữ tài nguyên hoặc quyết định đã tạo; không tạo thêm audit/outbox khi retry cùng yêu cầu |
 | Batch gán vùng–dự án, gán pháp nhân–dự án, chuyển chủ quản, xác nhận import Watchlist và import hạng đại lý | Request key cho toàn yêu cầu; kiểm version/unique/overlap vẫn áp dụng ở lần thực thi đầu |
+| Tạo job export ranking/chu kỳ | Request key trả cùng jobId; quyền xem trạng thái và tải file được kiểm riêng |
 | Ghi cấu hình, sửa hồ sơ/quan hệ có version | Kiểm expected version; replay không ghi thêm khi bản ghi đã đổi. Nếu action còn tạo tác động riêng, áp request key cho action đó |
 | Kích hoạt/ngừng và các lệnh tạo tác động ngoài | Request key cùng kiểm trạng thái hiện hành; sender chống lặp theo event ID/revision |
 | Chạy scan thủ công / job theo lịch / consumer | API chạy scan dùng request key trả cùng run ID; scheduler giữ khóa nghiệp vụ của lượt chạy, consumer dùng run/event ID và trạng thái công việc |
@@ -823,7 +839,7 @@ Core thống nhất thứ tự khóa cho các thao tác vùng/phân dự án: **
 
 Thu hồi phân dự án và ghi nhận liên kết pháp nhân–dự án cần đối soát thuộc cùng transaction Core với audit/outbox. Kiểm quyền bán đọc tập phân dự án hiện hành, không chờ worker cảnh báo mới mất quyền. Khi chuyển đại lý, tính lại tác động cho cả đại lý nguồn/đích. Liên minh xử lý trạng thái theo DEC-13 nhưng không được dùng để cấp lại quyền dự án đã thu hồi. Profile không ghi chéo bảng; các consumer cần nhận thay đổi dùng sự kiện Core sau commit và xử lý theo version, không suy ownership từ nguồn nhân sự Profile.
 
-Timeout chờ khóa 2 giây trả lỗi xung đột có thể thử lại. Với deadlock/serialization failure, chỉ retry tối đa 2 lần toàn transaction khi chưa phát tác động ngoài và vẫn giữ idempotency; không retry riêng câu lệnh cuối.
+Timeout khóa trả lỗi xung đột. Deadlock/serialization failure chỉ retry hữu hạn toàn transaction với cùng idempotency key, trước khi có tác động ngoài.
 
 ### 7.1.2 Thành viên liên minh
 
@@ -866,7 +882,7 @@ erDiagram
 
 Sơ đồ mô tả quan hệ logic giữa các nhóm dữ liệu. DDL trong repository Analytics quản lý khóa ngoại và index. Tên rút gọn tương ứng các bảng ở trên.
 
-Tập kết quả lưu khóa theo quý, đối tượng áp dụng và Sale; nhóm, số liệu và cấu hình được chụp cùng lần công bố. Quy tắc chọn kết quả cho Sale chuyển nhóm phải thống nhất giữa tính hạng, badge và chứng nhận theo DEC-12; API không tự lấy bản ghi đầu tiên để giải quyết nhiều kết quả. Trạng thái công bố chuyển một lần sau khi đủ dữ liệu. Sau công bố, DB và quyền ghi bảo vệ tập này khỏi cập nhật/xóa qua luồng hiệu chỉnh; bucket nguồn vẫn được đối soát riêng. Tên bộ phận/nội dung chứng nhận dùng khi công bố được chụp cùng dữ liệu chứng nhận để tải lại không phụ thuộc việc Sale chuyển đơn vị.
+Tập kết quả lưu theo quý, đối tượng và Sale; chụp nhóm, cấu hình, mốc nguồn và nội dung chứng nhận. DB/quyền ghi bảo vệ tính bất biến sau công bố theo mục 3.2.2. Quy thuộc Sale chuyển nhóm và khóa cuối cùng phải khớp DEC-12.
 
 ## 7.3 Dữ liệu Watchlist
 
@@ -890,12 +906,10 @@ Import đi qua PENDING/PROCESSING/VALIDATED/APPLYING/APPLIED hoặc FAILED/EXPIR
 | --- | --- |
 | `users` | username, tổ chức/role/status, `sales_start_date`, version nguồn |
 | `transactions` | PIC, deposit/contract date, eligibility và lý do loại |
-| `sales_cycle_configs` | audience, effective date, mode, tháng/target, reminder |
+| `sales_cycle_configs` | audience, effective date, mode, tháng/target, reminder, version số nguyên |
 | `sales_cycle_results` | Một kết quả theo Sale, calculation status/reason, classification, roomExcluded, applied start, resultVersion, version nguồn đã tính và dấu chờ tính lại |
 | `sales_cycle_periods` | Các kỳ có số thứ tự, type, start/scheduled end/actual end, target/count/achieved date, config snapshot |
 | `sales_cycle_notifications` | Lịch, trạng thái, lease/thử gửi, tham chiếu kỳ và version kết quả; receipt giữ nguyên sau tính lại |
-| `sales_cycle_recalculations` | Lịch sử hiệu chỉnh: lý do, nguồn/cấu hình, version trước/sau, các kỳ thay đổi và mã yêu cầu/sự kiện |
-| `background_jobs` | Lease và checkpoint của công việc nền |
 | Outbox | Sự kiện thay đổi dữ liệu; không thay thế bảng lịch thông báo |
 
 ```mermaid
@@ -917,7 +931,7 @@ Query có trạng thái stale khi ngày bán và kết quả áp dụng chưa kh
 
 ### 7.4.3 Lưu giữ dữ liệu chu kỳ và lịch sử xuất báo cáo
 
-Kỳ bán hàng, lịch thông báo và xác nhận gửi được quản lý thời hạn lưu riêng theo mục 7.6. Lịch sử xuất báo cáo ghi nhận người thực hiện, thời điểm và phạm vi dữ liệu.
+Kỳ bán hàng, lịch thông báo và xác nhận gửi được quản lý thời hạn lưu riêng theo mục 7.6. Lịch sử xuất báo cáo theo luồng export tại mục 6.1.
 
 ## 7.5 Luồng dữ liệu giữa các dịch vụ
 
@@ -1136,7 +1150,7 @@ sequenceDiagram
     W->>D: Ghi và công bố nguyên tử toàn quý khi đủ nhóm
 ```
 
-Outbox publisher chỉ gửi sau commit; transaction DB không bao gồm giao dịch Kafka. Worker kiểm event ID, version và trạng thái công việc trước khi ghi. Đơn vị công bố là **toàn quý trên tập Sale đủ điều kiện đã snapshot**, không công bố độc lập từng nhóm. Cấu hình phải bao phủ toàn tập này và mọi nhóm có Sale phải tính xong; nhóm không có Sale không tự chặn công bố. Thiếu cấu hình hoặc còn Sale chưa được bao phủ thì chưa công bố quý, trả trạng thái/lý do thiếu dữ liệu; remark không phải một kết quả hạng chính thức. Badge/chứng nhận của quý đó chỉ mở sau commit công bố toàn quý. Sweeper xử lý công việc treo theo lease và trạng thái DB; replay không cộng thêm doanh thu.
+Publisher gửi sau commit; worker kiểm event ID, version và trạng thái run/batch trước ghi. Công bố nguyên tử theo mục 3.2.2; sweeper tiếp quản công việc hết lease, replay không cộng lại doanh thu.
 
 ### 8.3.2 Tra cứu và xuất
 
@@ -1149,23 +1163,15 @@ BFF xác thực người dùng; Analytics kiểm actor token, quyền chức nă
 | Thiếu config hoặc còn Sale chưa được cấu hình bao phủ | Chặn công bố toàn quý; trả trạng thái/remark và cảnh báo, không gán hạng giả hoặc mở badge/chứng nhận từng nhóm |
 | Giao dịch thiếu tiền/ngày | Gắn lý do loại; đối soát nguồn |
 | Message lặp hoặc batch cũ | Kiểm trạng thái/lease; tránh ghi lặp |
-| Nguồn đến muộn | Cập nhật dữ kiện nguồn và báo cáo chênh lệch; giữ nguyên kết quả đã công bố theo mục 8.3.4 |
+| Nguồn đến muộn | Cập nhật dữ kiện nguồn và báo cáo chênh lệch; giữ nguyên kết quả đã công bố theo mục 3.2.2 |
 | Không có scope | Từ chối, không fallback toàn hệ thống |
 | Chứng nhận đang xử lý hoặc render lỗi | Trả trạng thái tương ứng; chỉ cấp URL khi file sẵn sàng và actor có quyền |
 
-### 8.3.4 Công bố, chuyển quý và dữ liệu đến muộn
+### 8.3.4 Chốt dữ liệu trước công bố
 
-Mỗi quý có hồ sơ chốt dữ liệu: mốc cutoff được BO duyệt, watermark/snapshot Pipeline của quý Q và Q−1 cần dùng, phạm vi population/cấu hình và kết quả đối soát thiếu/trùng/gap. Analytics chỉ công bố khi đã áp hết dữ liệu đến các watermark này, không còn lỗi nguồn ảnh hưởng tính điểm và BO/Data Owner chấp nhận tập chốt. Không dùng thời gian chạy job hoặc chỉ chờ T+N ngày để khẳng định nguồn đầy đủ. Nếu Pipeline chưa có marker hoàn tất theo quý, producer và Data Owner phải xác nhận snapshot/backfill cùng bằng chứng đối soát thay thế.
+Hồ sơ chốt quý gồm cutoff, watermark/snapshot Pipeline Q và Q−1, population, cấu hình và kết quả đối soát. Analytics chỉ công bố khi đã áp hết dữ liệu đến watermark, không còn lỗi nguồn ảnh hưởng điểm và BO/Data Owner xác nhận tập chốt. Nếu producer chưa có marker hoàn tất quý, dùng snapshot/backfill đã đối soát.
 
-Tập dữ liệu chưa đạt điều kiện chốt được giữ ở trạng thái tạm tính. Sau công bố, dữ liệu đến muộn được lưu để đối soát và tính kỳ chưa công bố theo DEC-08; không sửa lại tập đã công bố.
-
-Kết quả xếp hạng đã công bố **không được công bố lại**. Tập công bố lưu kỳ, phiên bản cấu hình, mốc dữ liệu và các số liệu dùng tính điểm; báo cáo kỳ đã công bố luôn đọc tập này. Giao dịch đến muộn hoặc hiệu chỉnh sau công bố được lưu ở dữ kiện nguồn và báo cáo chênh lệch riêng, không sửa hạng/điểm/doanh số của tập công bố. Điểm của kỳ chưa công bố sử dụng dữ kiện nguồn mới nhất đã đối soát; việc hiệu chỉnh dữ kiện quý trước có thể ảnh hưởng điểm kỳ sau nhưng không thay kết quả quý trước đã công bố.
-
-API/UI và báo cáo phải phân biệt doanh số Q−1 đã công bố với doanh số Q−1 dùng tính điểm quý Q sau hiệu chỉnh. L3-API cùng BFF/BO chốt trường dữ liệu, nhãn, mốc đối soát và cách giải thích chênh lệch trong DEC-06; không dùng cùng một nhãn doanh số khiến người đọc hiểu hai số là cùng phiên bản. Badge tiếp tục chỉ hiển thị hạng đã công bố; không sửa tập công bố để làm hai số khớp nhau.
-
-Badge trong quý Q chỉ lấy hạng đã công bố của Q−1. Từ đầu quý tới khi Q−1 được công bố, giao diện ẩn badge và hiển thị trạng thái chờ cập nhật; không tiếp tục gắn hạng Q−2 và không diễn giải chờ công bố thành không đạt hạng. Nút tải chứng nhận chỉ mở khi có hạng chính thức. Chứng nhận gắn kỳ, mã kết quả công bố và phiên bản template; dữ liệu nguồn hiệu chỉnh không làm thu hồi hoặc sinh lại chứng nhận với hạng khác. File hết hạn có thể được tạo lại từ cùng tập công bố.
-
-Kiểm thử bắt buộc: 00:00 chuyển quý, job chưa hoàn tất, không có cấu hình, dữ liệu đến muộn trước/sau công bố, công bố đồng thời và tải lại chứng nhận sau sửa nguồn.
+Thiếu điều kiện thì giữ tạm tính. Đóng băng, dữ liệu đến muộn và badge áp dụng mục 3.2.2. Kịch bản kiểm thử tập trung tại mục 15.
 
 ## 8.4 Watchlist: ghi nhận, đồng bộ, import và scan
 
@@ -1193,7 +1199,7 @@ Identity locks được lấy theo thứ tự ổn định để serialize các 
 
 Import: lấy mẫu → prepare-upload → upload file → tạo job bằng file ref → validate từng dòng → xem lỗi → confirm → apply và xem kết quả. Không dùng trạng thái VALIDATED để báo “đã cấm bán”. File XLSX tối đa 10 MB; giới hạn dòng và chính sách dữ liệu theo DEC-02.
 
-Scan: khóa điều phối Redis → nhận quyền run/epoch tại DB → lấy facts theo cursor → kiểm snapshot, tính đầy đủ và độ mới nguồn → xác định mốc và ngưỡng → ghi ứng viên → tính tỷ lệ → nếu bất thường thì giữ danh sách ứng viên để đối soát, chuyển chờ xét duyệt và không phát hành → nếu dry-run chỉ báo cáo → nếu thực thi mới ACTIVE và outbox trong transaction kiểm quyền run/epoch tại mục 5.1 và hiệu lực phê duyệt tại mục 3.3.4. Trước `graceUntil` bỏ qua áp hạn chế; từ ngày này đánh giá lại trên dữ kiện mới nhất theo mục 3.3.4. Không xóa gia hạn hoặc rút ngắn/kéo dài gia hạn theo số lượt quét. INT-01 phải đạt contract test và đối soát dry-run trước khi bật quét thực thi.
+Scan nhận quyền thực thi theo mục 5.1, đọc facts, lập ứng viên và áp guard/gia hạn tại mục 3.3.4. Chỉ run đủ điều kiện mới ghi ACTIVE cùng outbox; run chờ xét duyệt giữ danh sách để đối soát.
 
 ## 8.5 Chu kỳ bán hàng và lịch thông báo
 
@@ -1242,23 +1248,19 @@ stateDiagram-v2
 
 `PENDING`, `BLOCKED`, `COMPLETED` là trạng thái tính toán; các trạng thái bên trong `COMPLETED` là phân loại nghiệp vụ. Khi sửa/hủy giao dịch hoặc đổi ngày bán, bộ tính dựng lại các kỳ bị ảnh hưởng từ nguồn, không chỉ chuyển sang trạng thái kế tiếp trên sơ đồ.
 
-### 8.5.3 Lịch sử tính lại chu kỳ
+### 8.5.3 Đối soát sau tính lại
 
-Mỗi lần tính lại làm thay đổi kết quả phải ghi `recalculationId`, Sale, nguyên nhân, mã sự kiện/yêu cầu, phiên bản nguồn/cấu hình, khoảng kỳ bị ảnh hưởng, version kết quả trước/sau và thời điểm. Bản chênh lệch phải cho biết ngày kỳ, số giao dịch, phân loại và điều kiện hạn mức đã đổi thế nào. Kết quả mới và lịch sử thay đổi được commit cùng transaction; replay không đổi kết quả không tạo một lần hiệu chỉnh nghiệp vụ mới.
-
-Thông báo đã gửi giữ nguyên receipt và version kết quả đã dùng; tính lại chỉ hủy/điều hòa lịch chưa gửi. Đối soát phải tái dựng được vì sao kỳ cũ thay đổi mà không dựa vào log vận hành ngắn hạn. Audit chu kỳ không tự điều chỉnh hoa hồng hoặc quyết toán của hệ thống khác.
-
-Chu kỳ tiếp tục cho phép hiệu chỉnh lịch sử, không áp quy tắc đóng băng ranking. Consumer dùng hợp đồng đọc/version tại mục 6.6.2; phiên bản kết quả dùng cho quyết định trước đó được giữ để đối soát, không sửa ngược bằng kết quả mới.
+Tính lại theo quy tắc dữ liệu nguồn tại mục 3.4.4. Dùng lịch sử nghiệp vụ hiện có để truy vết nguyên nhân và kết quả thay đổi. Thông báo đã gửi giữ nguyên receipt; chỉ điều chỉnh lịch chưa gửi. Consumer sử dụng version kết quả theo mục 6.6.2.
 
 ### 8.5.4 Lịch thông báo
 
 Nhắc trước x ngày: ngày gửi không trước đầu kỳ; x vượt độ dài kỳ thì nhắc ngày đầu. Kết thúc: gửi ngày sau kết thúc vào giờ cấu hình. Đạt chỉ tiêu thì ngừng nhắc; lịch trùng cùng kỳ/loại/thời điểm được gộp.
 
-Giờ nhắc/`endNoticeTime` phải để đủ cửa sổ gửi trước hết ngày: thời gian còn lại ≥ thời gian giải phóng lô theo tải thiết kế cộng dự phòng retry/kênh chậm đã nghiệm thu tại INT-03. API cấu hình từ chối giờ vượt cửa sổ được công bố, UI dùng cùng giới hạn; không tự đẩy lịch sang ngày hôm sau. Mốc giờ cụ thể suy từ capacity đã đo, không mặc định 23:45 là an toàn chỉ vì NFR đặt mục tiêu 15 phút. Cấu hình cũ ngoài cửa sổ phải được điều chỉnh trước bật gửi thật.
+Cấu hình giờ gửi phải chừa đủ thời gian xử lý tải đỉnh và retry trước hết ngày. API/UI dùng cùng cửa sổ được nghiệm thu; cấu hình cũ ngoài cửa sổ phải chỉnh trước bật gửi.
 
 Job chuẩn bị bằng dữ liệu mới dưới khóa, gửi ngoài transaction rồi ghi kết quả. BLOCKED giữ lịch nhưng tạm không gửi và không tăng số lần thử; PENDING do ngày bán tương lai hủy lịch không còn phù hợp. Chỉ bù trong ngày; không tự gửi thông báo quá hạn ngày trước.
 
-Sale ngừng hoạt động **không nhận thông báo chu kỳ**. Khi nhận thay đổi trạng thái, Analytics hủy lịch chưa gửi cho Sale đó; ngay trước gửi phải kiểm lại trạng thái hoạt động và version kết quả. Sale được kích hoạt lại chỉ có lịch phù hợp với trạng thái hiện hành, không gửi bù thông báo của giai đoạn ngừng hoạt động. Lệnh đã được kênh tiếp nhận trước khi trạng thái ngừng có hiệu lực được ghi receipt để đối soát; không tuyên bố có thể thu hồi thông báo đã gửi.
+Sale inactive không nhận thông báo: hủy lịch chưa gửi, kiểm lại trạng thái/version trước gửi. Kích hoạt lại không gửi bù giai đoạn inactive; thông báo kênh đã nhận giữ receipt để đối soát.
 
 Trạng thái ngừng hoạt động không tự xóa dữ kiện hoặc lịch sử chu kỳ. Phép tính chu kỳ vẫn phục vụ báo cáo theo ngày bán và giao dịch; `TERMINATION_PROPOSED` là kết quả phân loại, không phát lệnh chấm dứt hay thông báo cho tài khoản ngừng hoạt động.
 
@@ -1322,7 +1324,7 @@ Upload XLSX → parse/validate A/B/C và độc quyền → lưu preview Redis g
 
 | Tình huống | Hành vi / phục hồi |
 | --- | --- |
-| Dịch vụ xác minh timeout | Tra cứu retry tối đa 3 lần theo mục 6.3.1; mutation chưa rõ kết quả không tự gửi lại; hết ngân sách chuyển xử lý tích hợp |
+| Dịch vụ xác minh timeout | Xử lý theo mục 6.3.1 |
 | Dịch vụ xác minh trả lỗi hoặc kết quả sai lệch | Lưu lý do, yêu cầu bổ sung hoặc kiểm tra thủ công theo quyền |
 | Profile/history lỗi sau commit Core/Watchlist | Giữ outbox, đo độ trễ và sai lệch đích theo mục 13.2.1; đọc lại quyết định hiện hành trước khi gửi |
 | Watchlist timeout/không khả dụng tại điểm kiểm soát | Dừng mutation cần quyết định, trả 503 có thể thử lại; không kết luận bị cấm, không kích hoạt hoặc cấp thêm quyền. Cho lưu nháp và đọc trong quyền hiện có |
@@ -1357,7 +1359,7 @@ API theo quyền người dùng kiểm service principal, quyền chức năng c
 | Ranking list/detail | Admin (11)/quản lý đại lý (100): toàn phạm vi; giám đốc vùng (60): vùng theo loại nguồn được chốt tại INT-06; giám đốc kinh doanh (23): phòng; quản lý Sale (20): nhóm; Sale (21): đơn vị thấp nhất; quản trị đơn vị/ASA (64): danh sách đại lý được cấp | Resolver giao scope với bộ lọc; scope rỗng không mở toàn hệ thống |
 | Ranking config/export | Config dành cho Admin/quản lý đại lý; export theo quyền riêng, chỉ có vai trò Sale không được xuất | Kiểm quyền độc lập với quyền xem; export giữ cùng predicate dữ liệu |
 | Chu kỳ list/detail/export | Phạm vi Sale theo tổ chức/đại lý/vùng của actor | BFF cung cấp context tin cậy; INT-06 nghiệm thu độ mới và quyền list/detail/export |
-| Chu kỳ config | Quyền quản trị cấu hình riêng | Kiểm actor, ngày hiệu lực và expectedUpdatedAt; audit trước/sau |
+| Chu kỳ config | Quyền quản trị cấu hình riêng | Kiểm actor, ngày hiệu lực và expectedVersion; audit trước/sau |
 | Watchlist | Realm Internal/Check/Market tách biệt; reveal/export/công khai là action riêng | Kiểm action và PII policy DEC-02; caller check chỉ nhận dữ liệu phục vụ quyết định |
 | Vùng | PCS/Admin theo REG-UC-08; phạm vi quản lý xác định qua CMS | Core/BFF thực thi action matrix; INT-06 bao phủ vùng ngoài phạm vi |
 | Import hạng đại lý | Admin (11)/quản lý chính sách (1101) trong nhóm ARM; preview gắn actor/organization | Confirm kiểm lại quyền và version; mở rộng role theo DEC-06 |
@@ -1387,7 +1389,7 @@ Credential được quản lý theo môi trường, cấp quyền tối thiểu 
 
 ### 9.3.1 Kiểm soát tra cứu thị trường
 
-API thị trường chỉ trả dữ liệu được công khai của bản ghi đang áp dụng. Người gọi không được tải toàn bộ danh sách, dò theo prefix hoặc phân biệt bản ghi không tồn tại với bản ghi không được công khai. Tra cứu dùng body, không đặt giá trị tìm kiếm trên URL. Mức khởi tạo: tối đa 10 yêu cầu/phút cho mỗi actor, burst 3; 60 yêu cầu/phút cho mỗi IP; 300 yêu cầu/phút cho mỗi caller. Bộ đếm dùng chung các replica; vượt ngưỡng trả 429 và `Retry-After`. Kênh không có actor phải có phiên tra cứu được xác thực tại BFF, không bỏ qua giới hạn actor.
+API thị trường chỉ trả dữ liệu được công khai của bản ghi đang áp dụng. Người gọi không được tải toàn bộ danh sách, dò theo prefix hoặc phân biệt bản ghi không tồn tại với bản ghi không được công khai. Tra cứu dùng body, không đặt giá trị tìm kiếm trên URL. Giới hạn theo actor, IP và caller bằng bộ đếm dùng chung các replica; vượt ngưỡng trả 429 và `Retry-After`. Hạn mức và burst được quản lý trong cấu hình Watchlist. Kênh không có actor phải có phiên tra cứu được xác thực tại BFF, không bỏ qua giới hạn actor.
 
 Theo dõi tỷ lệ không tìm thấy, số khóa tra cứu khác nhau và số lần bị chặn để phát hiện enumeration. Khóa thống kê định danh dùng HMAC và có thời hạn, không đưa nguyên giá trị vào log. Kết hợp hai trường định danh hay cho phép một trường phải được BO/Security chốt trong DEC-02; không tự mở rộng dữ liệu trả về vì người gọi biết một định danh.
 
@@ -1437,10 +1439,10 @@ Sơ đồ biểu diễn topology logic. Việc phân bổ database instance, bro
 
 | Nhóm | Cấu hình khởi tạo | Điều kiện rollout |
 | --- | --- | --- |
-| Ranking jobs | Tổng hợp lúc 02:00 | Điều phối triển khai sau khi import/backfill hoàn tất; không dùng lịch chạy để thay điều kiện đủ dữ liệu |
+| Ranking jobs | Lịch chạy trong cấu hình Analytics | Import/backfill và điều kiện chốt dữ liệu phải đạt trước công bố |
 | Kỳ đầu ranking | Q3/2026 | REL-03: chuẩn bị dữ liệu kỳ đầu và dữ liệu kỳ trước phục vụ trọng số |
-| Cycle | Job 00:00; notification claim tối đa 100 mục/worker, kiểm lịch mới mỗi 30 giây khi rỗng | Khi có backlog, worker xử lý liên tục; mục tiêu 100 lượt gửi/giây toàn cụm theo mục 11.1.1 |
-| Watchlist scanner | Disabled, dry-run=true; 02:00; batch 500; maxRatio 0,05; minSample 1.000 | Chỉ áp dụng khi nguồn đủ và đủ mới theo INT-01; contract test và dry-run report đạt trước bật thực thi |
+| Cycle | Lịch job, batch và polling trong cấu hình service | Worker xử lý liên tục khi còn backlog; đáp ứng NFR-15 |
+| Watchlist scanner | Khởi tạo tắt thực thi, bật dry-run | Nguồn đạt INT-01, guard theo mục 3.3.4 và dry-run được đối soát trước bật |
 | Ngưỡng hạn chế bán | `restricted-sale.threshold-months`: AGENCY=10, O2O=10, DIRECT=10; lưu version và hiệu lực áp dụng | Kiểm đủ ngưỡng cho population; thay đổi được audit, mỗi run chụp cấu hình đã dùng |
 | Rank import đại lý | Redis preview 15 phút, 5 MB/1.000 dòng | Kiểm giới hạn gateway và lỗi preview hết hạn |
 | Watchlist import | Thời hạn xác nhận 24 giờ, tối đa 20.000 dòng | DEC-02 chốt giới hạn; job đang áp dụng được giữ tới khi đối soát xong |
@@ -1482,13 +1484,13 @@ Ingress chỉ nhận caller được cấp; DB/Redis/Kafka đặt trong mạng r
 | Năng lực | Biến tải | Giới hạn/điểm đo |
 | --- | --- | --- |
 | Core | Hồ sơ, media refs, đại lý/Sale, quan hệ vùng/dự án | p95 list/detail, lock wait, file throughput, số mapping hiệu lực |
-| Ranking | N Sale × H tháng; T giao dịch; tối đa 4 quý mỗi query | DB bucket/WAL, batch, export 50.000, timeout query 10 giây |
-| Chu kỳ | N Sale × số kỳ + facts mỗi Sale | Batch đọc 500, transaction từng Sale; tài khoản lịch sử dài |
+| Ranking | N Sale × H tháng; T giao dịch; tối đa 4 quý mỗi query | DB bucket/WAL, batch, worker export, bộ nhớ và thời gian tạo file |
+| Chu kỳ | N Sale × số kỳ + facts mỗi Sale | Phân trang đọc, transaction từng Sale; tài khoản lịch sử dài |
 | Watchlist | Số bản ghi/định danh, check rps, scan population, import rows | p95 check, khóa định danh, parser memory, scan duration, outbox lag |
 | Vùng/liên minh | Số mapping ngày, dự án và membership | EXISTS trước phân trang, batch enrich, lock contention |
 | Xác minh hồ sơ tại Core | Số hồ sơ gửi xác minh, lượt tra cứu kết quả, thời gian chờ | Tỷ lệ đủ điều kiện, sai lệch, lỗi tích hợp và thời gian xử lý hồ sơ |
 
-Capacity test sử dụng dữ liệu nhiều năm và chạy đồng thời query, export/import, job cùng cập nhật hồ sơ trên nhiều pod. Đo riêng tài khoản có timeline dài, thời gian giữ khóa và memory khi xuất file. Batch 500 giới hạn số Sale mỗi lượt đọc; preview 15 phút giới hạn thời gian xác nhận thao tác.
+Capacity test sử dụng dữ liệu nhiều năm và chạy đồng thời query, export/import, job cùng cập nhật hồ sơ trên nhiều pod. Đo riêng tài khoản có timeline dài, thời gian giữ khóa và memory khi xuất file.
 
 ### 11.1.1 Tập tải thẩm định và cao điểm thông báo
 
@@ -1496,13 +1498,13 @@ Tập dữ liệu nghiệm thu tải gồm 50.000 Sale, 2 triệu giao dịch, 1
 
 OPS-01 phải bổ sung số liệu thực tế có nguồn và ngày đo: Sale hoạt động/tổng số, giao dịch và tốc độ tăng, độ dài lịch sử, tải giờ cao điểm và dự báo tăng trưởng trong kỳ quy hoạch. Báo cáo tách số liệu production đo được khỏi tập tải nghiệm thu; dự báo tăng trưởng ghi rõ nguồn và kỳ quy hoạch.
 
-L3-OPS xác định ngân sách heap/tài nguyên tạm khi đọc DB và tạo workbook, giới hạn export đồng thời theo instance/toàn cụm và hành vi khi vượt giới hạn; L3-API mô tả phản hồi tương ứng. Hai export là điều kiện thử tải NFR-13, không tự là giới hạn tiếp nhận. Kiểm thử phải đo bộ nhớ cả bước đọc dữ liệu lẫn tạo/giao file, thu hồi tài nguyên khi lỗi hoặc client ngắt kết nối và tải chung với job/API; phân trang DB đơn thuần chưa chứng minh không vượt heap.
+Worker export có giới hạn đồng thời, heap và tài nguyên tạm trong cấu hình service. Load test đo cả đọc dữ liệu, tạo/upload file và thời gian hàng đợi khi chạy cùng API/job. Hai lượt đồng thời là tải nghiệm thu NFR-13. Worker lỗi phải thu hồi tài nguyên; client ngắt kết nối không làm mất job đã được nhận.
 
-Nếu mỗi 30 giây chỉ xử lý 100 thông báo cho toàn cụm thì năng lực tối đa là 12.000/giờ, cần khoảng 4 giờ 10 phút cho 50.000 thông báo, chưa tính retry. Thiết kế vì vậy tách lịch phát hiện công việc khỏi tốc độ gửi: mỗi worker nhận tối đa 100 mục theo lease DB, xử lý xong lấy batch tiếp khi còn việc, không ngủ thêm 30 giây giữa các batch.
+Worker nhận việc theo batch có giới hạn và xử lý liên tục khi còn backlog. Giới hạn tốc độ gửi áp dụng toàn cụm, không tăng theo số replica.
 
-Mục tiêu sơ bộ gửi 50.000 thông báo trong 15 phút cần tối thiểu 55,6 lượt/giây. Thiết kế tải đỉnh 100 lượt/giây **toàn cụm**, có dự phòng cho retry; rate limiter chung phải nằm trong hạn mức được kênh đích chấp nhận. Replica có thể tăng tốc xử lý nhưng không tăng hạn mức toàn cụm. Nếu kênh không đáp ứng 55,6 lượt/giây, INT-03 phải chốt lại cửa sổ gửi hoặc phân bố lịch trước rollout IMMEDIATE, không che thiếu năng lực bằng tăng batch.
+NFR-15 yêu cầu năng lực tối thiểu 55,6 thông báo/giây, chưa gồm retry. Load test phải chứng minh kênh đích đáp ứng tải và dự phòng; không tăng batch để vượt hạn mức kênh.
 
-Queue ưu tiên thời điểm đến hạn rồi ID để xử lý ổn định; đo tuổi công việc và dự báo thời gian giải phóng backlog. Thông báo hết ngày không được gửi bù sang ngày sau: ghi nhận hết hạn, đưa vào báo cáo sự cố và không báo là đã gửi. Nghiệm thu gồm peak 50.000 lịch cùng giờ, kênh chậm, retry, chuyển inactive trong lúc chờ và thời điểm sát hết ngày.
+Queue ưu tiên thời điểm đến hạn rồi ID; theo dõi backlog và tuổi công việc. Load test bao phủ kênh chậm, retry, inactive và sát hết ngày; quy tắc gửi tại mục 8.5.4.
 
 ## 11.2 Cost Model
 
@@ -1576,31 +1578,21 @@ Application log liên kết request/job/outbox bằng correlation ID và domain 
 | Kích hoạt BLOCKED/hết retry | Hồ sơ APPROVED nhưng tài khoản chưa hoạt động | Giao người phụ trách, kiểm checks/receipt và điều kiện tái kích hoạt theo 3.1.1 |
 | Projection Core → Analytics chậm/gap | Không xác nhận được phạm vi tài nguyên hiện hành | Chặn truy vấn phụ thuộc, replay/đối soát watermark theo INT-06 |
 | Notification UNKNOWN | Outcome delivery không xác định | Đối soát receipt trước retry |
-| Dịch vụ xác minh hết retry, circuit mở hoặc hồ sơ chờ quá 30 phút | Hồ sơ không hoàn tất bước xác minh | Theo mục 6.3.1: đối soát mã yêu cầu, giao danh sách cần xử lý; không tự gửi lại mutation |
+| Dịch vụ xác minh hết retry, circuit mở hoặc quá ngưỡng chờ | Hồ sơ không hoàn tất bước xác minh | Theo mục 6.3.1: đối soát mã yêu cầu, giao danh sách cần xử lý; không tự gửi lại mutation |
 
 Ngưỡng theo môi trường, thời gian duy trì cảnh báo, mức độ và người trực được quản lý tại L3-OPS. Mỗi cảnh báo phải có owner và đường dẫn runbook trước go-live.
 
 ### 13.2.1 Giám sát outbox và trạng thái đích
 
-Core và Watchlist đo riêng từng kênh Profile/History: số pending/failed, tuổi bản ghi chưa xác nhận cũ nhất, thời gian từ commit đến đích xác nhận p95/p99, số lần thử, tỷ lệ lỗi và thời điểm thành công gần nhất. Profile có thêm số tài khoản mà trạng thái đích khác quyết định hiện hành. ACK vận chuyển không tự chứng minh trạng thái nghiệp vụ đã áp dụng đúng.
+Đo theo kênh: số pending/failed, tuổi bản ghi cũ nhất, thời gian đến đích xác nhận, tỷ lệ lỗi và sai lệch trạng thái. ACK vận chuyển không thay xác nhận nghiệp vụ; mục tiêu delivery theo NFR-14.
 
-| Mức khởi tạo | Điều kiện | Hành động |
-| --- | --- | --- |
-| Cảnh báo | Bản ghi chưa xác nhận lâu hơn 2 phút, duy trì 2 phút | Báo owner kênh; kiểm dependency, worker và lease |
-| Nghiêm trọng | Lâu hơn 5 phút, hoặc backlog có việc nhưng không có delivery thành công trong 5 phút | Gọi người trực; đối soát tập ảnh hưởng và dừng retry dồn dập khi đích lỗi |
-| Sai lệch trạng thái | Profile không khớp quyết định còn hiệu lực sau cửa sổ 2 phút | Đối soát theo tài khoản, đọc lại controls và chạy đồng bộ có quyền |
-
-Bộ đối soát chạy mỗi phút trên tập tài khoản có thay đổi chưa được xác nhận, phân trang và giới hạn tải. Alert liên kết tới correlation/event ID trong log; không dùng tài khoản làm nhãn metric. Màn hình vận hành phân biệt quyết định đã lưu, đang chờ đồng bộ, đồng bộ lỗi và đã đối soát.
-
-`RELEASED` không đồng nghĩa tài khoản ACTIVE. Đối soát xác nhận phần kiểm soát Watchlist đã được cập nhật, đồng thời giải thích khóa từ vòng đời Core, Profile/IAM hoặc yêu cầu tái kích hoạt. Không phát lệnh mở để làm dashboard hết cảnh báo. Replay chỉ cập nhật phần thuộc writer theo revision; yêu cầu mở lại cũ không vượt qua thế hệ chặn mới.
-
-Mỗi tài khoản có revision tăng dần riêng cho nguồn Core và Watchlist theo mục 6.5.3; sender tuần tự hóa trong từng nguồn, Profile bỏ qua revision cũ của nguồn đó và nhận lặp an toàn. Profile tính trạng thái hiệu lực từ các phần sở hữu riêng, không dùng thứ tự đến của Core/Watchlist để ghi đè trạng thái chung. Đọc state trước gửi đơn thuần không ngăn được request cũ đến muộn sau request mới. Hợp đồng revision/đối soát này là điều kiện INT-05; kênh History dùng event ID và thứ tự aggregate để giữ lịch sử đúng. Sau restore phải khôi phục/đối soát revision đã được đích nhận trước khi tiếp tục, không ép đích nhận revision thấp hơn.
+Cảnh báo và lịch đối soát nằm trong cấu hình vận hành. Dashboard phân biệt chờ gửi, gửi lỗi và đã đối soát, liên kết request/event ID với runbook. Đối soát Profile theo quyền ghi/revision tại mục 6.5.3; phục hồi sau restore theo mục 12.3.1.
 
 ## 13.3 SLI/SLO
 
 SLI đo riêng API availability, data freshness, job completion, side-effect delivery và notification delivery. Thông báo gửi thành công phải có xác nhận từ kênh. Đo riêng tỷ lệ hồ sơ hoàn tất xác minh, tỷ lệ sai lệch và tỷ lệ được phê duyệt.
 
-Mục 4 xác định mục tiêu sơ bộ và cửa sổ availability theo tháng; mục 13.2.1 xác định ngưỡng delivery. OPS-01 đối chiếu phép đo với các mục tiêu này, ghi error budget và mọi điều chỉnh đã được phê duyệt. Dashboard sử dụng cùng định nghĩa với báo cáo nghiệm thu.
+Mục 4 xác định mục tiêu sơ bộ và cửa sổ availability theo tháng; mục 13.2.1 xác định chỉ số delivery. OPS-01 đối chiếu phép đo với các mục tiêu này, ghi error budget và mọi điều chỉnh đã được phê duyệt. Dashboard sử dụng cùng định nghĩa với báo cáo nghiệm thu.
 
 # 14. Operational Readiness
 
@@ -1647,10 +1639,10 @@ Go-live record ghi kết quả từng tiêu chí, reviewer và evidence của m�
 | Ranking API | Tối đa 4 quý, export cắt có thông báo, Sale không có quyền export, scope rỗng, sửa scope body không mở quyền, detail ngoài quyền; phân biệt Q−1 đã công bố và Q−1 dùng tính điểm Q |
 | Badge/chứng nhận | Cutoff chưa được duyệt, watermark thiếu/gap không công bố; backfill Q2/Q3 theo trọng số; đầu quý chờ công bố và Q3 công bố sau Q4 không gắn badge hiện hành; dữ kiện sửa sau công bố không đổi hạng/chứng nhận; chuyển đơn vị và tải lại; tên dài/có dấu, file lỗi, quyền tải |
 | Watchlist | Định danh chuẩn hóa/trùng; CCCD và mã nhân viên cùng người theo DEC-01; giấy tờ ngoài phạm vi; bổ sung/reapply; create/release cùng lúc; account subset; trạng thái công khai; reveal/export quyền âm |
-| Watchlist outbox | Release trước sender; nhiều controls; mất ACK; alert 2/5 phút; đối soát từng nguồn và thế hệ chặn; gộp ban/release trước delivery không tự mở lại; trạng thái kiểm soát chưa khởi tạo không coi là cho phép |
+| Watchlist outbox | Release trước sender; nhiều controls; mất ACK; cảnh báo backlog; đối soát từng nguồn và thế hệ chặn; gộp ban/release trước delivery không tự mở lại; trạng thái kiểm soát chưa khởi tạo không coi là cho phép |
 | Watchlist import/scan | File/dòng sai, confirm lặp/hết hạn; population < 1.000, ratio > 5%, thiếu ngưỡng; phê duyệt run thường xuyên hết hạn/đổi snapshot/config; worker cũ tỉnh sau mất lease và hai run khác ID không ghi sau epoch mới; trước/đúng graceUntil, chạy lại hoặc bỏ lỡ nhiều lượt không đổi gia hạn; thiếu trang/nguồn, snapshot đủ nhưng quá cũ |
 | Cycle calculator | Ngày bắt đầu 28–31/01/2026 cùng kết thúc 27/02 nhưng khác số ngày; chuỗi nhiều kỳ/năm nhuận; IMMEDIATE cắt kỳ chưa đạt/thử thách và không tạo kỳ rỗng; audit trước/sau khi late/cancel; replay không thêm hiệu chỉnh |
-| Cycle nguồn/config | Late/cancel/đổi PIC/ngày, version từng cấu hình; hai audience độc lập, một phần tử conflict rollback batch; phần tử không gửi được giữ, round-trip độ chính xác expectedUpdatedAt; IMMEDIATE/SEQUENTIAL, ngày bán tương lai, đổi audience, thiếu config |
+| Cycle nguồn/config | Late/cancel/đổi PIC/ngày, version từng cấu hình; hai audience độc lập, một phần tử conflict rollback batch; phần tử không gửi được giữ, tạo version 1, cập nhật tăng version, version cũ/mất version bị từ chối và migration dữ liệu cũ; IMMEDIATE/SEQUENTIAL, ngày bán tương lai, đổi audience, thiếu config |
 | Cycle job/notice | Peak 50.000 cùng giờ; config ngoài cửa sổ gửi bị từ chối; hạn mức toàn cụm; inactive trước/sau claim; không gửi bù ngày trước; lease mất, BLOCKED/PENDING, crash sau gửi |
 | Vùng | CMS trùng/không khả dụng, tên chuẩn hóa, ít nhất một role, stop khi còn lịch tương lai, overlap khác giai đoạn |
 | Chủ quản/vùng bán | Chuyển D−1/D, lịch tương lai, hai chuyển đồng thời, không đổi dự án, ASSIGNED khác ADDITIONAL, thu hồi scope |
@@ -1660,7 +1652,7 @@ Go-live record ghi kết quả từng tiêu chí, reviewer và evidence của m�
 | Reliability/performance | Tải mục 11; overlap 10.000 kỳ/đối tượng; khóa chéo vùng/đại lý/liên minh; restore sau đích nhận trước ACK; RTO/RPO và không phát lặp |
 | Hợp đồng bảo mật | Token giả/hết hạn/sai audience/body/replay; idempotency cùng/khác payload; Watchlist timeout fail-closed; market enumeration và rate limit nhiều pod |
 | Dữ liệu đăng ký/xác minh | Ma trận SEC-01; bằng chứng đồng ý theo phiên bản/mục đích khi áp dụng; rút lại và legal hold theo chính sách; quyền giải mã, tra cứu định danh và đổi khóa theo L3-SEC và thiết kế dữ liệu tại mục 7 |
-| Export | NFR-13 với 2 lượt đồng thời, vượt giới hạn đã chốt, tạo workbook và giao file, ngắt kết nối/lỗi, timeout xuyên gateway/BFF; audit người xuất và phạm vi dữ liệu |
+| Export | NFR-13 với 2 lượt đồng thời, vượt giới hạn đã chốt, 202/jobId và poll; hàng đợi nằm trong 120 giây; file lỗi/hết hạn; retry cùng jobId; quyền bị thu hồi trước tải; audit người xuất và phạm vi dữ liệu |
 | Định danh và lần đăng ký | Username bất biến/duy nhất; facts orphan không gán nhầm; session sai chủ sở hữu; submit từ màn hình cũ sau REPLACED không tác động lần mới; retry cùng registration trả kết quả cũ |
 | Checks S2S và kích hoạt | Principal Core chỉ gọi realm Check; actor header giả không cấp CRUD/reveal; ban sau nộp trước duyệt và trước worker kích hoạt; Profile nhận ban/activate theo cả hai thứ tự, gỡ không tự mở, lệnh mở cũ sau thế hệ chặn mới; staged BLOCKED/retry hết hạn/receipt mất; audit nối actor → check request → service principal |
 | Projection và scope | Snapshot/event giao nhau, event lặp/cũ/gap; chuyển đại lý khi token cũ còn hạn; CMS/Agent cùng ID nhưng khác loại; projection chậm chặn truy cập, không lọt Sale đã chuyển |
@@ -1709,7 +1701,7 @@ Các phụ thuộc dưới đây là điều kiện để nghiệm thu thiết k
 | --- | --- | --- | --- |
 | INT-01 | Hợp đồng dữ liệu hoạt động bán giữa Analytics và Watchlist | Khóa username bất biến theo 7.5.1; facts không kèm PII tra cứu; kiểm snapshot/version, đủ trang, độ mới và mẫu guard toàn run; đối soát dry-run | Analytics/Watchlist — Integration |
 | INT-02 | Đồng bộ ngày bắt đầu bán từ Profile vào Analytics | Khóa username theo 7.5.1, phiên bản nguồn, backfill và tính lại; nghiệm thu thay đổi ngày/late event, tài khoản ngừng hoạt động và orphan | Profile/Analytics — Integration/UAT |
-| INT-03 | Gửi thông báo chu kỳ trên Web/App | Hợp đồng Web/App, receipt/dedup; ≥ 55,6 lượt/giây cho peak thiết kế; không gửi Sale inactive; timeout và mất ACK không gửi trùng | Analytics/Notification — Integration/UAT |
+| INT-03 | Gửi thông báo chu kỳ trên Web/App | Hợp đồng Web/App, receipt/dedup; đạt NFR-15; không gửi Sale inactive; timeout và mất ACK không gửi trùng | Analytics/Notification — Integration/UAT |
 | INT-04 | Badge/chứng nhận: triển khai pipeline RANK-US-05, RANK-US-06 | API self-access, template version, resolve/render, private file; test đổi quý, tên tiếng Việt và lỗi render | Analytics/BFF — Integration/UAT |
 | INT-05 | Checks, kích hoạt và trạng thái hiệu lực tại Profile | Principal realm Check; contract writer riêng tại 6.5.3, revision/receipt, tái kích hoạt, staged retry và restore; ban/activate mọi thứ tự, legacy không ghi đè | Core chủ trì; Profile/Watchlist phối hợp, Security nghiệm thu — Integration/UAT |
 | INT-06 | Quan hệ Core → Analytics và phạm vi truy cập | Snapshot/event có version, chuyển/thu hồi quan hệ, loại vùng CMS/Agent, nguồn audience; resolver và projection đủ mới, test list/detail/export | Core chủ trì dữ liệu; BFF chủ trì scope, Analytics/Profile phối hợp — Security/UAT |
@@ -1719,25 +1711,25 @@ Các phụ thuộc dưới đây là điều kiện để nghiệm thu thiết k
 | OPS-01 | Capacity, SLO, RTO/RPO và deployment profile | Capacity report đạt mục 4/11; outbox alert mục 13.2.1; DR không phát lặp và đạt RTO/RPO theo mục 12.3.1 | SRE/DBA — OAT |
 | SEC-01 | Retention và quyền truy cập dữ liệu Cobroker | Retention schedule, encryption/access matrix, purge/hold rules; test quyền hồ sơ, tài liệu, báo cáo và export | Data Owner/Security — Data production |
 
-## 16.3 Quy tắc nghiệp vụ và tiêu chí nghiệm thu
+## 16.3 Chỉ mục quy tắc nghiệp vụ
 
-Các mã DEC liên kết quy tắc trong thiết kế với phạm vi kiểm thử. Việc phê duyệt tài liệu được ghi nhận tại workflow thẩm định.
+Mỗi quy tắc được đặc tả tại mục chính dưới đây; các mã DEC dùng truy vết thẩm định và kiểm thử.
 
-| ID | Phạm vi | Quy tắc / tiêu chí nghiệm thu |
+| ID | Nội dung | Mục chính |
 | --- | --- | --- |
-| DEC-01 | Định danh Watchlist | Một hồ sơ BANNED theo định danh xuyên vòng đời; bổ sung/áp dụng lại bảo toàn lịch sử, không tự hợp nhất hai người khi thiếu bằng chứng |
-| DEC-02 | Tra cứu và PII | Tách quyền tra cứu/reveal/export; exact-match, rate limit, audit và masking theo mục 9.3.1 |
-| DEC-03 | Hạn chế bán | Ngưỡng theo kênh; ngày tham chiếu, graceUntil, guard và phê duyệt run theo mục 3.3.4; mỗi run giữ snapshot nguồn/cấu hình |
-| DEC-04 | Chu kỳ và consumer | IMMEDIATE/SEQUENTIAL theo 3.4.4; tính lại có version/audit, giữ receipt đã gửi; không tự đảo quyết định Quỹ căn đã thực hiện |
-| DEC-05 | Vùng INACTIVE | Kiểm điều kiện sửa liên kết CMS và kích hoạt lại; giữ khóa tên/vai trò, kiểm quyền và audit |
-| DEC-06 | Ranking và dữ liệu công bố | Trọng số tổng 100%, quota/đồng hạng theo 3.2.2; nguồn Q/Q−1 đạt đối soát trước công bố; UI phân biệt số đã công bố và số hiệu chỉnh |
-| DEC-07 | Checks và kích hoạt | Fail-closed khi checks không xác định; Core/Watchlist ghi phần trạng thái riêng tại Profile; gỡ chặn không tự tiếp tục tác vụ kích hoạt |
-| DEC-08 | Đóng băng ranking | Kết quả đã công bố không công bố lại; dữ kiện mới không sửa hạng, điểm hoặc chứng nhận đã công bố |
-| DEC-09 | Thông báo chu kỳ | Sale inactive không nhận thông báo; hủy lịch chưa gửi, kiểm trạng thái trước gửi và không gửi bù giai đoạn inactive |
-| DEC-10 | Force-reject | ARM, lý do bắt buộc, chỉ hồ sơ hiện hành; REJECTED/CANCELLED/REPLACED bị từ chối; cập nhật xác minh và khôi phục hồ sơ Sale theo 3.1.1 |
-| DEC-11 | Trạng thái Sale | Phân biệt trạng thái đăng ký, trạng thái hồ sơ Sale và trạng thái tài khoản Profile; không ánh xạ DISABLE trực tiếp sang FROZEN/REQUEST_UPDATE |
-| DEC-12 | Ranking khi chuyển nhóm | Khóa kết quả, nhóm tính điểm, badge và chứng nhận phải dùng cùng quy tắc quy thuộc theo thời gian; không chọn tùy ý trong nhiều kết quả |
-| DEC-13 | Liên minh | Kiểm riêng điều kiện liên minh/pháp nhân; không cấp quyền dự án từ sự tồn tại của liên minh; thay đổi trạng thái giữ lịch sử và kiểm quyền hiện hành |
+| DEC-01 | Định danh Watchlist | 3.3.2 |
+| DEC-02 | Tra cứu và PII | 9.3.1 |
+| DEC-03 | Hạn chế bán và guard | 3.3.4 |
+| DEC-04 | Đổi cấu hình/nguồn chu kỳ | 3.4.4 |
+| DEC-05 | Vùng INACTIVE | 3.5.2 |
+| DEC-06 | Công thức và điều kiện công bố ranking | 3.2.2; 8.3.4 |
+| DEC-07 | Checks và kích hoạt | 6.5.2; 6.5.3 |
+| DEC-08 | Đóng băng ranking | 3.2.2 |
+| DEC-09 | Thông báo cho Sale inactive | 8.5.4 |
+| DEC-10 | Force-reject | 3.1.1 |
+| DEC-11 | Trạng thái Sale | 3.1.2 |
+| DEC-12 | Ranking khi chuyển nhóm | 3.2.2; 7.2.1 |
+| DEC-13 | Liên minh | 3.5.4 |
 
 ### 16.3.1 Đầu vào nghiệp vụ cần hoàn tất trước phê duyệt
 
@@ -1755,32 +1747,26 @@ Các mã DEC liên kết quy tắc trong thiết kế với phạm vi kiểm th�
 
 Các đầu vào trên phải được bổ sung vào quy tắc, API và test tương ứng trước phê duyệt; không được coi là đã có quyết định chỉ vì bảng có mã DEC.
 
-### 16.3.2 Trạng thái phụ thuộc và hạn hoàn tất
+### 16.3.2 Mốc hoàn tất và phát hành
 
-Bảng dưới theo dõi trạng thái thẩm định và nghiệm thu của các phụ thuộc. Hạn hoàn tất gắn với mốc phê duyệt/phát hành. Release Owner cùng nhóm phụ trách xác lập ngày lịch cụ thể cho từng mốc trước APPROVED.
+| Mốc | Điều kiện |
+| --- | --- |
+| APPROVED | Hoàn tất đầu vào mục 16.3.1, mục tiêu NFR và chính sách dữ liệu |
+| BASELINE | API/event/schema và migration đồng bộ; export job và version cấu hình khớp Agent BFF |
+| Bật tính năng | Tích hợp, dữ liệu/backfill và quyền truy cập đạt tiêu chí mục 16.2 |
+| GO-LIVE | Tải, phục hồi, bảo mật và vận hành đạt nghiệm thu |
 
-| Hạng mục | Trạng thái nghiệm thu | Hạn hoàn tất | Tác động khi trễ / cách cô lập |
-| --- | --- | --- | --- |
-| INT-01 | Chờ producer/consumer xác nhận contract và kết quả kiểm thử | Contract trước BASELINE; kiểm thử trước bật scanner | Scanner chỉ dry-run, không phát hạn chế tự động |
-| INT-02 | Chờ xác nhận nguồn ngày bán, mapping và backfill | Contract trước BASELINE; đối soát trước bật chu kỳ | Sale thiếu ngày giữ BLOCKED; không bật phân hệ trên tập thiếu dữ liệu, không tạo ngày giả |
-| INT-03 | Chờ nghiệm thu kênh, hạn mức và chống lặp | Trước bật gửi thông báo | Không báo gửi thành công bằng log; chưa đạt peak thì chưa rollout lịch đồng loạt |
-| INT-04 | Chờ nghiệm thu chứng nhận | Trước bật tải chứng nhận | Badge chỉ dùng kết quả công bố; không cấp file chưa sẵn sàng |
-| INT-05 | Writer riêng, principal Check và tác vụ kích hoạt theo 6.5; nghiệm thu contract Profile và migration legacy | Contract trước BASELINE; test trước phát hành | Không bật kích hoạt khi còn writer ghi đè trạng thái chung hoặc chưa đạt ban/activate/restore |
-| INT-06 | Chờ xác nhận loại vùng, nguồn audience, contract quan hệ và resolver | Mapping trước APPROVED; contract trước BASELINE; backfill/test trước mở truy cập | Scope chưa rõ hoặc projection không đủ mới thì chặn truy vấn phụ thuộc, không mở toàn dữ liệu |
-| REL-01 | Chờ nghiệm thu quyền xem tài liệu | Trước phát hành duyệt hồ sơ | Không mở quyền truy cập rộng để xử lý thiếu tích hợp |
-| REL-02 | Chờ BO duyệt chuyển tiếp và báo cáo backfill | Chính sách trước APPROVED; dữ liệu trước cutover | Áp hành vi hồ sơ cũ thiếu dữ liệu ở mục 10.3.1; không bật validation toàn hồ sơ |
-| REL-03 | Q3/2026 đã kết thúc; tại 15/10/2026 chưa có ngày công bố được xác nhận | BO/Release Owner cần xử lý ngay trong đợt review này: ghi ngày chốt DEC-06/12, chốt nguồn, hoàn tất backfill và công bố; chưa đủ căn cứ thì ghi ngày cập nhật kế hoạch tiếp theo | Giữ kỳ đầu Q3, đối soát Q3 và Q2 theo trọng số. Truyền thông rõ kỳ đang chờ và lịch cập nhật; nếu sang Q1/2027 mới công bố Q3 thì chỉ bổ sung lịch sử/chứng nhận, không tự gắn badge Q3 thay quý trước |
-| OPS-01 | Chờ số liệu quy mô thực tế/dự báo, capacity và chính sách export; alert/DR rehearsal | Target trước APPROVED; tài nguyên/giới hạn export trước BASELINE; bằng chứng trước GO-LIVE | Chặn go-live nếu chưa đạt tải, phục hồi hoặc chống phát lặp |
-| SEC-01 | Chờ Data Owner/Security/Pháp chế xác nhận căn cứ xử lý đăng ký/xác minh và công khai, consent khi áp dụng, retention/mã hóa | Chính sách trước APPROVED; thiết kế bảo vệ định danh trước BASELINE; kiểm thử trước GO-LIVE | Không vận hành dữ liệu thật hoặc mở kênh công khai khi chưa có chính sách/quyền được duyệt |
-| L3-API | Chờ xác minh path ranking chứa username và thống nhất contract export với L3-OPS/BFF | Trước BASELINE | Chưa đổi path hoặc chuyển export thành job khi chưa có contract và kế hoạch tương thích được duyệt |
+Kỳ đầu ranking giữ Q3/2026; backfill Q3 và Q2 theo trọng số. BO/Release Owner xác nhận ngày chốt nguồn, hoàn tất backfill và công bố trong kế hoạch phát hành. Tại 15/10/2026 chưa có ngày công bố được xác nhận; Sale được thông báo kỳ đang chờ và lần cập nhật kế tiếp. Công bố Q3 sau Q4 không thay quy tắc badge quý trước.
 
 ### 16.3.3 Khớp nối artefact trước baseline
 
-OpenAPI phải ánh xạ được sang ràng buộc dữ liệu và kịch bản kiểm thử: enum/trạng thái, version/idempotency, uniqueness/overlap, actor/scope, lỗi và timeout. Script migration/backfill được quản lý trong repository của từng service, kèm kiểm tra dữ liệu cũ và rollback tương thích theo mục 10; L3-SEC bao gồm kịch bản giả actor, vượt scope, replay và enumeration. Người thẩm định ký cùng một tập phiên bản, không ghép API mới với DDL hoặc ma trận quyền cũ. Kết quả chạy kiểm thử và diễn tập là bằng chứng go-live sau triển khai; không yêu cầu có code chạy trước khi viết/phê duyệt thiết kế.
+API, event schema, migration và test phải cùng phiên bản. Backend kiểm enum/version, khóa/ràng buộc dữ liệu, quyền và lỗi xuyên các artefact; migration/backfill nằm trong repository service. Biên bản nghiệm thu ghi phiên bản, môi trường và kết quả, không ghép bằng chứng từ các baseline khác nhau.
 
 ## 16.4 Migration & Compatibility Controls
 
-Tích hợp xác minh danh tính tuân theo L3-IDV; quyền xem tài liệu phục vụ duyệt được nghiệm thu theo REL-01. Hạng đại lý dùng A/B/C; cập nhật hạng qua import có preview/version. Quan hệ vùng/dự án bảo vệ bằng khóa cha và kiểm overlap tại service. Thay đổi schema, quyền hoặc event contract phải có migration, API-diff và consumer compatibility report.
+Export và version cấu hình chu kỳ là thay đổi contract: migration dữ liệu trước, sau đó triển khai đồng bộ Analytics và Agent BFF. Caller phải đọc jobId/trạng thái tải và gửi expectedVersion. Kiểm thử tương thích trước chuyển traffic; không âm thầm nhận request timestamp cũ hoặc trả XLSX trực tiếp trên contract mới.
+
+Các thay đổi schema/event/quyền còn lại phải có migration, API diff và consumer contract tests. Rollback tuân tính tương thích schema tại mục 10.3.
 
 Lịch sử dữ liệu cũ được giữ phục vụ đối soát. Cutover không phát lại notification hoặc lệnh Profile hàng loạt; mỗi side effect được xử lý theo trạng thái thực tế và runbook đã nghiệm thu.
 
@@ -1819,7 +1805,7 @@ Mã truy vết trong TTD gồm tiền tố phân hệ và mã gốc: `RANK-US-01
 
 ## C. Đầu vào bắt buộc trước production
 
-Go-live package gồm approval record, contract INT-01…INT-06, quyết định DEC-01…DEC-13, backfill Q3, cấu hình job/scanner/tích hợp, migration rehearsal, report UAT/security/load/restore, SLO, retention và RTO/RPO. Mỗi artefact gắn phiên bản, owner và kết quả nghiệm thu tại Governance Gates.
+Gói phát hành gồm thiết kế được duyệt, contract/schema/config cùng phiên bản, migration/backfill và báo cáo UAT/security/load/restore. Điều kiện nghiệm thu tại mục 14–16.
 
 ## D. Danh mục quyết định kiến trúc (ADR)
 
