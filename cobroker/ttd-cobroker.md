@@ -85,9 +85,11 @@ Profile là nguồn nhân sự/đơn vị; Pipeline là nguồn giao dịch; Cor
 
 ## 2.1 System Context & Component Diagram
 
+Agent BFF là BFF duy nhất phục vụ Web/App và gọi Core, Analytics, Watchlist. Các tham chiếu “BFF” trong tài liệu đều chỉ Agent BFF.
+
 ```mermaid
 flowchart LR
-    U["Web / App"] --> B["Agent / Cobroker BFF"]
+    U["Web / App"] --> B["Agent BFF"]
     B --> C["CoBroker Core"]
     B --> A["Sales Analytics"]
     B --> W["Watchlist"]
@@ -414,9 +416,9 @@ Các cơ chế khác nhau đáp ứng vòng đời công việc khác nhau. Vậ
 
 | Nguồn → đích | Mục đích | Giao thức / chế độ | Dữ liệu / ràng buộc |
 | --- | --- | --- | --- |
-| BFF → Core | Hồ sơ, đại lý, vùng, liên minh, pháp nhân | REST/HTTPS, sync | Actor/role, organization, resource IDs; gate BFF |
-| BFF → Analytics | Ranking/cycle/config/export | REST/HTTPS, sync | ServiceResponse hoặc XLSX; scope tin cậy |
-| BFF / caller được cấp → Watchlist | CRUD/check/lookup | REST/HTTPS, sync | Tách realm Internal/Check/Market và CIDR |
+| Agent BFF → Core | Hồ sơ, đại lý, vùng, liên minh, pháp nhân | REST/HTTPS, sync | Actor/role, organization, resource IDs; gate BFF |
+| Agent BFF → Analytics | Ranking/cycle/config/export | REST/HTTPS, sync | ServiceResponse hoặc XLSX; scope tin cậy |
+| Agent BFF / caller được cấp → Watchlist | CRUD/check/lookup | REST/HTTPS, sync | Tách realm Internal/Check/Market và CIDR |
 | Core → Watchlist | Checks tại nộp hồ sơ, kích hoạt và thao tác thuộc DEC-07 | REST/HTTPS, sync trước transaction ghi | Core thực thi quyết định; actor/caller và liên kết kết quả kiểm theo mục 6.5.2, INT-05 |
 | Core → OCR/eKYC | Gửi yêu cầu và lấy kết quả xác minh hồ sơ | REST/HTTPS | Xác thực S2S, referenceId/session; kết quả gắn đúng hồ sơ |
 | Profile / Pipeline → Analytics | Nhân sự/tổ chức/giao dịch | Import và event | Version nguồn, dữ kiện eligibility riêng từng nghiệp vụ |
@@ -909,7 +911,7 @@ Sale hoặc người thao tác được cấp quyền khai báo thông tin, cung
 ```mermaid
 sequenceDiagram
     participant U as Sale / Người<br/>được cấp quyền
-    participant B as BFF
+    participant B as Agent BFF
     participant C as Cobroker Core
     participant J as Worker tra cứu<br/>của Core
     participant D as Dữ liệu hồ sơ
@@ -1045,7 +1047,7 @@ Kiểm thử bắt buộc: 00:00 chuyển quý, job chưa hoàn tất, không c�
 
 ```mermaid
 sequenceDiagram
-    participant B as BFF/Caller
+    participant B as Agent BFF / Caller
     participant W as Watchlist
     participant D as Watchlist DB
     participant O as Outbox sender
@@ -1161,7 +1163,7 @@ Nếu kênh đã nhận nhưng ghi receipt thất bại, công việc chuyển U
 
 ```mermaid
 sequenceDiagram
-    participant B as BFF
+    participant B as Agent BFF
     participant C as Core
     participant D as Core DB
     B->>C: agencyId, targetRegion, effectiveFrom, reason
@@ -1267,7 +1269,7 @@ Core, Analytics và Watchlist được triển khai độc lập. Mỗi dịch v
 
 ```mermaid
 flowchart TB
-    G["Ingress / API Gateway / BFF"] --> C["Core pods"]
+    G["Ingress / API Gateway / Agent BFF"] --> C["Core pods"]
     G --> A["Analytics pods"]
     G --> W["Watchlist pods"]
     C -->|"REST: checks trước mutation"| W

@@ -1,5 +1,5 @@
 flowchart TB
-    G["Ingress / API Gateway / BFF"] --> C["Core pods"]
+    G["Ingress / API Gateway / Agent BFF"] --> C["Core pods"]
     G --> A["Analytics pods"]
     G --> W["Watchlist pods"]
     C -->|"REST: checks trước mutation"| W
