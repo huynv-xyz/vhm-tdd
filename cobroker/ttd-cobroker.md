@@ -41,7 +41,6 @@ Reviewer, quyết định, ngày xác nhận và evidence được ghi tại wor
 | --- | --- | --- | --- |
 | L3-API | API nghiệp vụ và ma trận lỗi | Backend/Integration | Mục 6; Schema/OpenAPI versioned; validation và consumer contract tests |
 | L3-IDV | Hợp đồng xác minh danh tính của Cobroker | Core/Integration | Mục 6.3, 8.2; liên kết kết quả, retry/timeout, circuit breaker, đối soát và xử lý thủ công |
-| L3-DATA | DDL, migration và backfill | Backend/DBA | Mục 7, 10; unique/version, exclusion constraint, thành viên liên minh, snapshot, lịch sử tính lại và cutover |
 | L3-INT | Facts, ngày bán, notification, chứng nhận và scope vùng | Integration/BFF | INT-01…INT-06 tại mục 16.2; producer/consumer cùng phiên bản và E2E |
 | L3-SEC | Ma trận quyền và hợp đồng actor | Security/Backend | Mục 9; actor token, replay, idempotency, enumeration; test quyền đọc/ghi và xuất dữ liệu |
 | L3-QA | Test specification và test report | QA | Mục 15; report gắn phiên bản phát hành/môi trường tại quality gate |
@@ -789,7 +788,7 @@ Response lỗi thống nhất các trường `code, message, correlationId`; chi
 | `alliances`, `alliance_members` | Liên minh theo dự án; mỗi thành viên là một dòng có đại lý, vai trò và trạng thái tham gia |
 | `legal_projects` | Pháp nhân–dự án có hiệu lực |
 | `user_registered_scope` | Core sở hữu và ghi qua luồng phân dự án; nguồn scope dự án của Sale dùng suy ra dự án đại lý |
-| Tác vụ kích hoạt | Registration/version, request ID, revision Core, trạng thái tại 3.1.1, retry/receipt và người phụ trách; tên bảng vật lý thuộc L3-DATA |
+| Tác vụ kích hoạt | Registration/version, request ID, revision Core, trạng thái tại 3.1.1, retry/receipt và người phụ trách; tên bảng vật lý được quản lý trong migration của Core |
 | History/outbox | Audit và side effect; không thay bảng quan hệ hiệu lực |
 
 ```mermaid
@@ -806,7 +805,7 @@ erDiagram
     AGENCY_PROFILES ||--o{ ALLIANCE_MEMBERS : "tham gia"
 ```
 
-ERD mô tả các aggregate và quan hệ nghiệp vụ. LEGAL_ENTITIES biểu diễn aggregate pháp nhân; mapping bảng vật lý thuộc L3-DATA. Thành viên liên minh được chuẩn hóa theo quan hệ tại mục 7.1.2. Organization scope được kiểm tại agency và resource liên quan; scope vùng được resolve qua CMS và quan hệ vùng.
+ERD mô tả các aggregate và quan hệ nghiệp vụ. LEGAL_ENTITIES biểu diễn aggregate pháp nhân; mapping bảng vật lý được quản lý trong migration của Core. Thành viên liên minh được chuẩn hóa theo quan hệ tại mục 7.1.2. Organization scope được kiểm tại agency và resource liên quan; scope vùng được resolve qua CMS và quan hệ vùng.
 
 ### 7.1.1 Khoảng hiệu lực và kiểm soát đồng thời
 
@@ -865,7 +864,7 @@ erDiagram
     USERS ||--o{ RESULTS : "username logic"
 ```
 
-Sơ đồ mô tả quan hệ logic giữa các nhóm dữ liệu. DDL quản lý khóa ngoại và index theo L3-DATA. Tên rút gọn tương ứng các bảng ở trên.
+Sơ đồ mô tả quan hệ logic giữa các nhóm dữ liệu. DDL trong repository Analytics quản lý khóa ngoại và index. Tên rút gọn tương ứng các bảng ở trên.
 
 Tập kết quả lưu khóa theo quý, đối tượng áp dụng và Sale; nhóm, số liệu và cấu hình được chụp cùng lần công bố. Quy tắc chọn kết quả cho Sale chuyển nhóm phải thống nhất giữa tính hạng, badge và chứng nhận theo DEC-12; API không tự lấy bản ghi đầu tiên để giải quyết nhiều kết quả. Trạng thái công bố chuyển một lần sau khi đủ dữ liệu. Sau công bố, DB và quyền ghi bảo vệ tập này khỏi cập nhật/xóa qua luồng hiệu chỉnh; bucket nguồn vẫn được đối soát riêng. Tên bộ phận/nội dung chứng nhận dùng khi công bố được chụp cùng dữ liệu chứng nhận để tải lại không phụ thuộc việc Sale chuyển đơn vị.
 
@@ -908,7 +907,7 @@ erDiagram
     SALES_CYCLE_PERIODS ||--o{ SALES_CYCLE_NOTIFICATIONS : "lich logic"
 ```
 
-ERD biểu diễn quan hệ logic; snapshot trong kỳ lưu thông số cấu hình đã áp dụng. Khóa và index vật lý được quản lý trong L3-DATA.
+ERD biểu diễn quan hệ logic; snapshot trong kỳ lưu thông số cấu hình đã áp dụng. Khóa và index vật lý được quản lý trong migration của Analytics.
 
 ### 7.4.2 Hiển thị và dữ liệu thiếu
 
@@ -960,9 +959,9 @@ SEC-01 quản lý lịch retention, legal hold, quyền xóa và kiểm soát m�
 
 Luồng đăng ký/xác minh phải có ma trận dữ liệu, mục đích, căn cứ xử lý, bên nhận và nơi lưu thực tế được Pháp chế/Data Owner duyệt trong SEC-01, bao gồm phần Cobroker gửi sang OCR/eKYC. Phân biệt ảnh giấy tờ, dữ liệu sinh trắc học, kết quả đối soát và tham chiếu; không mặc định Core lưu toàn bộ dữ liệu dịch vụ xác minh xử lý. Việc phân loại đối chiếu Luật 91/2025/QH15 và [Nghị định 356/2025/NĐ-CP](https://vanban.chinhphu.vn/?pageid=27160&docid=216387), không chỉ dựa vào tên trường “eKYC”.
 
-Với mục đích cần sự đồng ý, L3-SEC/L3-DATA xác định nơi lưu bằng chứng: chủ thể, mục đích/phạm vi, phiên bản nội dung đã hiển thị, thời điểm/kênh xác nhận và trạng thái rút lại. Chính sách phải chốt tác động khi từ chối/rút lại, phần xử lý phải dừng và phần được lưu theo căn cứ khác hoặc legal hold; không dùng một cờ consent chung để cấp quyền cho mọi mục đích. Các trường hợp dùng căn cứ khác phải ghi căn cứ được phê duyệt, không tự coi consent là bắt buộc cho mọi xử lý.
+Với mục đích cần sự đồng ý, L3-SEC và thiết kế dữ liệu tại mục 7 xác định nơi lưu bằng chứng: chủ thể, mục đích/phạm vi, phiên bản nội dung đã hiển thị, thời điểm/kênh xác nhận và trạng thái rút lại. Chính sách phải chốt tác động khi từ chối/rút lại, phần xử lý phải dừng và phần được lưu theo căn cứ khác hoặc legal hold; không dùng một cờ consent chung để cấp quyền cho mọi mục đích. Các trường hợp dùng căn cứ khác phải ghi căn cứ được phê duyệt, không tự coi consent là bắt buộc cho mọi xử lý.
 
-CCCD và dữ liệu định danh trong `sale_control` phải được đặc tả bảo vệ khi lưu trong L3-SEC/L3-DATA: mã hóa dữ liệu/bản sao, quản lý khóa, quyền giải mã và cách exact-match/kiểm unique trên giá trị chuẩn hóa. Nếu dùng chỉ mục HMAC phục vụ tra cứu, phải có mục đích/khóa riêng với HMAC thống kê và kế hoạch đổi khóa bảo toàn tra cứu/uniqueness. Chỉ mục tra cứu không thay mã hóa dữ liệu gốc; phương án cụ thể cùng migration được Security/DBA duyệt trước BASELINE.
+CCCD và dữ liệu định danh trong `sale_control` phải được đặc tả bảo vệ khi lưu trong L3-SEC và thiết kế dữ liệu tại mục 7: mã hóa dữ liệu/bản sao, quản lý khóa, quyền giải mã và cách exact-match/kiểm unique trên giá trị chuẩn hóa. Nếu dùng chỉ mục HMAC phục vụ tra cứu, phải có mục đích/khóa riêng với HMAC thống kê và kế hoạch đổi khóa bảo toàn tra cứu/uniqueness. Chỉ mục tra cứu không thay mã hóa dữ liệu gốc; phương án cụ thể cùng migration được Security/DBA duyệt trước BASELINE.
 
 ### 7.6.1 Thời hạn lưu phục vụ thiết kế dung lượng
 
@@ -1660,7 +1659,7 @@ Go-live record ghi kết quả từng tiêu chí, reviewer và evidence của m�
 | REG-UC-07, REG-UC-08 | AND/OR filter trước pagination, count không trùng, union scope đọc, thao tác ngoài quyền vùng |
 | Reliability/performance | Tải mục 11; overlap 10.000 kỳ/đối tượng; khóa chéo vùng/đại lý/liên minh; restore sau đích nhận trước ACK; RTO/RPO và không phát lặp |
 | Hợp đồng bảo mật | Token giả/hết hạn/sai audience/body/replay; idempotency cùng/khác payload; Watchlist timeout fail-closed; market enumeration và rate limit nhiều pod |
-| Dữ liệu đăng ký/xác minh | Ma trận SEC-01; bằng chứng đồng ý theo phiên bản/mục đích khi áp dụng; rút lại và legal hold theo chính sách; quyền giải mã, tra cứu định danh và đổi khóa theo L3-SEC/L3-DATA |
+| Dữ liệu đăng ký/xác minh | Ma trận SEC-01; bằng chứng đồng ý theo phiên bản/mục đích khi áp dụng; rút lại và legal hold theo chính sách; quyền giải mã, tra cứu định danh và đổi khóa theo L3-SEC và thiết kế dữ liệu tại mục 7 |
 | Export | NFR-13 với 2 lượt đồng thời, vượt giới hạn đã chốt, tạo workbook và giao file, ngắt kết nối/lỗi, timeout xuyên gateway/BFF; audit người xuất và phạm vi dữ liệu |
 | Định danh và lần đăng ký | Username bất biến/duy nhất; facts orphan không gán nhầm; session sai chủ sở hữu; submit từ màn hình cũ sau REPLACED không tác động lần mới; retry cùng registration trả kết quả cũ |
 | Checks S2S và kích hoạt | Principal Core chỉ gọi realm Check; actor header giả không cấp CRUD/reveal; ban sau nộp trước duyệt và trước worker kích hoạt; Profile nhận ban/activate theo cả hai thứ tự, gỡ không tự mở, lệnh mở cũ sau thế hệ chặn mới; staged BLOCKED/retry hết hạn/receipt mất; audit nối actor → check request → service principal |
@@ -1777,7 +1776,7 @@ Bảng dưới theo dõi trạng thái thẩm định và nghiệm thu của cá
 
 ### 16.3.3 Khớp nối artefact trước baseline
 
-OpenAPI phải ánh xạ được sang ràng buộc dữ liệu và kịch bản kiểm thử: enum/trạng thái, version/idempotency, uniqueness/overlap, actor/scope, lỗi và timeout. L3-DATA bao gồm kế hoạch migration/backfill, kiểm dữ liệu cũ và rollback tương thích; L3-SEC bao gồm kịch bản giả actor, vượt scope, replay và enumeration. Người thẩm định ký cùng một tập phiên bản, không ghép API mới với DDL hoặc ma trận quyền cũ. Kết quả chạy kiểm thử và diễn tập là bằng chứng go-live sau triển khai; không yêu cầu có code chạy trước khi viết/phê duyệt thiết kế.
+OpenAPI phải ánh xạ được sang ràng buộc dữ liệu và kịch bản kiểm thử: enum/trạng thái, version/idempotency, uniqueness/overlap, actor/scope, lỗi và timeout. Script migration/backfill được quản lý trong repository của từng service, kèm kiểm tra dữ liệu cũ và rollback tương thích theo mục 10; L3-SEC bao gồm kịch bản giả actor, vượt scope, replay và enumeration. Người thẩm định ký cùng một tập phiên bản, không ghép API mới với DDL hoặc ma trận quyền cũ. Kết quả chạy kiểm thử và diễn tập là bằng chứng go-live sau triển khai; không yêu cầu có code chạy trước khi viết/phê duyệt thiết kế.
 
 ## 16.4 Migration & Compatibility Controls
 
