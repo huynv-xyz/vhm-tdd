@@ -13,8 +13,6 @@
 
 Tài liệu đặc tả kiến trúc mục tiêu của Cobroker, bao gồm ranh giới dịch vụ, quy tắc nghiệp vụ, hợp đồng tích hợp, mô hình dữ liệu và các điều kiện nghiệm thu. Các yêu cầu trong tài liệu là cơ sở triển khai và kiểm thử. Các điều kiện tích hợp và quyết định nghiệp vụ cần phê duyệt được quản lý tập trung tại mục 16.
 
-Nội dung không gắn nhãn là thiết kế mục tiêu của bản DRAFT, không phải xác nhận đã triển khai. **[Đề xuất — DEC-xx]** có phương án trình duyệt; **[Chưa chốt — DEC-xx]** chưa có quy tắc cuối. Owner và hạn xử lý tập trung tại mục 16. Code hiện hữu dùng kiểm compatibility, không thay phê duyệt nghiệp vụ.
-
 **Review Responsibility Matrix**
 
 | Nhóm chịu trách nhiệm | Phạm vi thẩm định | Cổng xác nhận |
@@ -33,7 +31,7 @@ Reviewer, quyết định, ngày xác nhận và evidence được ghi tại wor
 | Chuyển trạng thái | Điều kiện đầu vào |
 | --- | --- |
 | DRAFT → UNDER REVIEW | Nội dung, sơ đồ và contract đủ phạm vi; quyết định nghiệp vụ và phụ thuộc có ID, owner, tác động và phương án xử lý |
-| UNDER REVIEW → APPROVED | BO xác nhận các quyết định ảnh hưởng phạm vi; kiến trúc/tích hợp/bảo mật phê duyệt; OpenAPI, mô hình/DDL dự kiến và kịch bản kiểm thử tương thích nhau; mục tiêu NFR và các ngoại lệ có quyết định rõ |
+| UNDER REVIEW → APPROVED | Không còn quyết định mở ảnh hưởng quy tắc nghiệp vụ, quyền truy cập, ownership dữ liệu hoặc hợp đồng tích hợp trong phạm vi phê duyệt; nội dung và sơ đồ đã cập nhật theo quyết định cuối; BO, kiến trúc, tích hợp và bảo mật xác nhận; OpenAPI, mô hình/DDL dự kiến và kịch bản kiểm thử tương thích nhau; mục tiêu NFR và các ngoại lệ có quyết định rõ |
 | APPROVED → IMPLEMENTATION BASELINE | Chốt phiên bản OpenAPI/event schema, DDL/migration, actor contract, kế hoạch chuyển đổi và test specification; liên kết cùng baseline và có người phê duyệt |
 | IMPLEMENTATION BASELINE → GO-LIVE | UAT, security, performance, migration và restore đạt tiêu chí; dashboard và runbook sẵn sàng vận hành |
 
