@@ -77,7 +77,7 @@ Tài liệu chỉ mô tả giao tiếp giữa Cobroker với OCR/eKYC, Pipeline/
 
 ## 1.4 Assumptions, Constraints & Dependencies
 
-Ngày nghiệp vụ dùng múi giờ Việt Nam. Profile là nguồn nhân sự/đơn vị; Pipeline là nguồn giao dịch; Core sở hữu hồ sơ đại lý và liên kết vùng; Analytics sở hữu projection/báo cáo; Watchlist sở hữu quyết định cấm/hạn chế. Không ghi chéo database giữa các service.
+Profile là nguồn nhân sự/đơn vị; Pipeline là nguồn giao dịch; Core sở hữu hồ sơ đại lý và liên kết vùng; Analytics sở hữu projection/báo cáo; Watchlist sở hữu quyết định cấm/hạn chế. Không ghi chéo database giữa các service.
 
 “Vùng” trong cây CMS, vùng chủ quản đại lý và vùng bán dự án là các khái niệm có mapping riêng. “Hạng Sale” Kim cương/Bạch kim/Vàng khác “hạng đại lý” A/B/C. Không sử dụng chung enum hoặc suy ra quyền từ sự giống nhau về tên.
 
@@ -363,7 +363,7 @@ Các chỉ tiêu định lượng dưới đây là **mục tiêu thiết kế s
 | ID | Hạng mục | Tiêu chí thiết kế / nghiệm thu | Cách đo |
 | --- | --- | --- | --- |
 | NFR-01 | Chính xác tiền | numeric(24,2); bucket VND × 100; so điểm trước làm tròn; từ chối overflow | Test giá trị biên và đối soát tổng nguồn/bucket |
-| NFR-02 | Chính xác thời gian | Tháng lịch, Asia/Ho_Chi_Minh, ngày đầu/cuối inclusive | Test ngày31, năm nhuận, D−1/D+1, chuyển quý/năm |
+| NFR-02 | Chính xác thời gian | Tháng lịch, ngày đầu/cuối inclusive | Test ngày31, năm nhuận, D−1/D+1, chuyển quý/năm |
 | NFR-03 | Idempotency | Replay không nhân đôi doanh số, quan hệ, yêu cầu hồ sơ hoặc quyết định phê duyệt | Concurrent/replay/crash tests |
 | NFR-04 | Phân quyền | Mọi list/detail/export/history/media/config áp action + scope | Negative tests trên BFF và service |
 | NFR-05 | Watchlist check latency | Mục tiêu p95 ≤ 50 ms ở 50 rps tại service, không tính mạng bên ngoài | Load test endpoint check trên dữ liệu production-like |
@@ -1300,7 +1300,7 @@ Sơ đồ biểu diễn topology logic. Việc phân bổ database instance, bro
 
 | Nhóm | Cấu hình khởi tạo | Điều kiện rollout |
 | --- | --- | --- |
-| Ranking jobs | Tổng hợp lúc 02:00, múi giờ Việt Nam | Điều phối triển khai sau khi import/backfill hoàn tất; không dùng lịch chạy để thay điều kiện đủ dữ liệu |
+| Ranking jobs | Tổng hợp lúc 02:00 | Điều phối triển khai sau khi import/backfill hoàn tất; không dùng lịch chạy để thay điều kiện đủ dữ liệu |
 | Kỳ đầu ranking | Q3/2026 | REL-03: chuẩn bị dữ liệu kỳ đầu và dữ liệu kỳ trước phục vụ trọng số |
 | Cycle | Job 00:00; notification claim tối đa 100 mục/worker, kiểm lịch mới mỗi 30 giây khi rỗng | Khi có backlog, worker xử lý liên tục; mục tiêu 100 lượt gửi/giây toàn cụm theo mục 11.1.1 |
 | Watchlist scanner | Disabled, dry-run=true; 02:00; batch 500; maxRatio 0,05; minSample 1.000 | Chỉ áp dụng khi nguồn đủ và đủ mới theo INT-01; contract test và dry-run report đạt trước bật thực thi |
