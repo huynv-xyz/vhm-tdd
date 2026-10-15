@@ -15,9 +15,9 @@ flowchart TB
     W --> K
     C --> K
     C -->|"Vòng đời và quyền Sale (INT-05)"| P["Profile / IAM / CMS"]
-    W -->|"Thrift: kiểm soát riêng (INT-05)"| P
+    W -->|"Thrift"| P
     P --> A
-    C -->|"Projection quan hệ có version (INT-06)"| A
+    C --> A
     PL["Pipeline"] --> A
     W -->|"REST: đọc facts (INT-01)"| A
     C --> F["File Service"]

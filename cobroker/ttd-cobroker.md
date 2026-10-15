@@ -101,17 +101,17 @@ flowchart LR
     C --> E["OCR/eKYC service"]
     C -->|"Vòng đời và quyền Sale (INT-05)"| P["Profile / IAM / CMS"]
     P --> A
-    C -->|"Projection quan hệ có version (INT-06)"| A
+    C --> A
     D["Sales Pipeline"] --> A
     W -->|"Đọc facts (INT-01)"| A
-    W -->|"Kiểm soát riêng (INT-05)"| P
+    W --> P
     C --> H["History / Notification / File"]
     W --> H
     A --> H
     Q["Quỹ căn"] -->|"Đọc điều kiện chu kỳ hiện hành"| A
-    C --> CD[("Core DB / Outbox")]
-    A --> AD[("Analytics DB / Outbox")]
-    W --> WD[("Watchlist DB / Outbox")]
+    C --> CD[("Core DB")]
+    A --> AD[("Analytics DB")]
+    W --> WD[("Watchlist DB")]
     A <--> K["Kafka"]
     W --> K
     C --> K
@@ -1119,7 +1119,7 @@ ARM tạo yêu cầu và snapshot; ASA chỉnh nháp rồi gửi duyệt; ARM xe
 ```mermaid
 sequenceDiagram
     participant J as Bộ điều phối
-    participant D as Database và Outbox
+    participant D as Analytics DB
     participant P as Outbox publisher
     participant K as Kafka
     participant W as Worker
@@ -1417,9 +1417,9 @@ flowchart TB
     W --> K
     C --> K
     C -->|"Vòng đời và quyền Sale (INT-05)"| P["Profile / IAM / CMS"]
-    W -->|"Thrift: kiểm soát riêng (INT-05)"| P
+    W -->|"Thrift"| P
     P --> A
-    C -->|"Projection quan hệ có version (INT-06)"| A
+    C --> A
     PL["Pipeline"] --> A
     W -->|"REST: đọc facts (INT-01)"| A
     C --> F["File Service"]
